@@ -88,6 +88,9 @@
           <el-menu-item index="/dean/stats">
             <el-icon><PieChart /></el-icon> <span>科研统计</span>
           </el-menu-item>
+          <el-menu-item index="/dean/data-export">
+            <el-icon><Download /></el-icon> <span>数据导出</span>
+          </el-menu-item>
         </template>
 
         <!-- 审核管理菜单 -->

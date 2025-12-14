@@ -39,6 +39,11 @@ const router = createRouter({
           component: () => import('../views/dean/Stats.vue'),
           meta: { title: '统计' }
         },
+        {//数据导出的
+          path: 'dean/data-export',
+          component: () => import('../views/dean/DataExport.vue'),
+          meta: { title: '数据导出' }
+        },
         {
           path: 'user/manage',
           component: () => import('../views/admin/UserManage.vue'),
