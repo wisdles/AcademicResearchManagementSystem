@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: research-system
+  datasource:
+    # 数据库连接配置
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/school_research_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: abc123 # 改成你自己的数据库密码
+  servlet:
+    multipart:
+      max-file-size: 50MB # 单个文件最大限制
+      max-request-size: 50MB # 总请求最大限制
+  mvc:
+    static-path-pattern: /files/**
+  web:
+    resources:
+      static-locations: file:D:/school_files/
+mybatis-plus:
+  configuration:
+    # 开启控制台打印 SQL 日志，方便调试
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启驼峰命名自动映射 (database_field -> javaField)
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      # 逻辑删除配置：1为删除，0为未删除
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+logging:
+  level:
+    "[root]": ERROR
+    "[org.springframework]": ERROR
+    "[org.springframework.security]": DEBUG
+    "[com.zaxxer.hikari]": WARN
+    "[com.baomidou.mybatisplus]": WARN
+    "[org.springframework.web]": DEBUG
+
+# 自定义文件配置
+file:
+  # 上传保存的物理路径 (根据你的电脑修改，注意最后要有斜杠)
+  # 如果是 Mac/Linux 写 /Users/xxx/school_files/
+  upload-path: D:/school_files/
+  # 映射的访问前缀
+  access-path: /files/**
