@@ -27,7 +27,6 @@
 // }
 package com.school.research_system.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,38 +37,29 @@ public class PaperDto {
 
     private String title;
 
-    @JsonProperty("journal_name")
     private String journalName;
 
     private String issn;
 
-    @JsonProperty("impact_factor")
     private BigDecimal impactFactor;
 
     // 前端: pages -> 后端: pages
     private String pages;
 
-    // 前端: partition -> 后端: partitionInfo
-    @JsonProperty("partition")
-    private String partitionInfo;
+    private String sciPartition;
 
-    @JsonProperty("publish_date")
     private LocalDate publishDate;
 
     private String authors;
 
-    @JsonProperty("corresponding_author")
     private String correspondingAuthor;
 
     private String discipline;
-    private String category;
 
-    // 前端: proof_file -> 后端: proofFile
-    @JsonProperty("proof_file")
     private String proofFile;
 
     private String remark;
     private Boolean isSubmit;
-    @JsonProperty("classification")
+
     private String classification;// 科学教研分类
 }

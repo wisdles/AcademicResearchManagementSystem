@@ -71,6 +71,7 @@ const handleFormSuccess = () => {
            2. 监听 success 事件，提交成功后自动切回列表
         -->
         <AchievementForm 
+          :key="type"
           :type="type" 
           :initial-data="editData" 
           @success="handleFormSuccess"
@@ -83,6 +84,7 @@ const handleFormSuccess = () => {
         -->
         <AchievementList 
           ref="listRef"
+          :key="type"
           :type="type" 
           @edit="handleEdit" 
         />

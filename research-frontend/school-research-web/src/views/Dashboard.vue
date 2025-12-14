@@ -1,14 +1,13 @@
 <template>
   <div class="dashboard-container">
     
-    <!-- 1. 顶部动态通知条 (改版：字体变大，日期放前面) -->
+    <!-- 1. 顶部动态通知条 -->
     <div class="notice-bar" v-if="latestNotice">
       <div class="notice-icon">
         <el-icon :size="20"><BellFilled /></el-icon> <span style="margin-left:5px">最新公告：</span>
       </div>
       <div class="scroll-wrapper" @click="viewDetail(latestNotice)">
         <div class="scroll-content">
-          <!-- 改成：[2024-12-08] 标题内容 -->
           <span class="scroll-date">[{{ formatDate(latestNotice.createTime) }}]</span>
           <span class="scroll-title">{{ latestNotice.title }}</span>
         </div>
@@ -33,22 +32,18 @@
           <ul class="notice-list">
             <li v-for="item in noticeList" :key="item.id" class="notice-item" @click="viewDetail(item)">
               <div class="item-left">
-                <!-- 标签稍微变大 -->
-                <el-tag :type="getCategoryType(item.category)" effect="dark" class="category-tag">
-                  {{ getCategoryText(item.category) }}
+                <!-- 🔴 修改点 1：字段由 classification 改为 classification -->
+                <el-tag :type="getclassificationType(item.classification)" effect="dark" class="classification-tag">
+                  {{ getclassificationText(item.classification) }}
                 </el-tag>
                 
-                <!-- 标题变大、加粗 -->
                 <span class="item-title">{{ item.title }}</span>
-                
-                <!-- NEW 图标 -->
                 <span v-if="isNew(item.createTime)" class="new-icon">NEW</span>
               </div>
               <div class="item-right">
                 <span class="item-publisher">{{ item.publisherName }}</span>
                 <span class="item-date">{{ formatDate(item.createTime) }}</span>
 
-                <!-- 操作按钮 -->
                 <div class="action-btns" v-if="item.publisherId === currentUserId || role === 'ADMIN'">
                   <el-button type="primary" link icon="Edit" @click.stop="handleEdit(item)"></el-button>
                   <el-button type="danger" link icon="Delete" @click.stop="handleDelete(item)"></el-button>
@@ -73,24 +68,22 @@
       </el-col>
     </el-row>
 
-    <!-- 弹窗部分保持不变，省略代码以节省篇幅，原来的逻辑不用动 -->
-    <!-- ... 发布弹窗 ... -->
-    <!-- ... 详情弹窗 ... -->
-    
-    <!-- 为了完整性，我把原来的发布和详情弹窗代码贴在这里，确保你覆盖不会出错 -->
     <!-- 发布弹窗 -->
     <el-dialog v-model="publishVisible" title="发布新通知" width="600px" destroy-on-close>
       <el-form :model="form" label-width="80px">
         <el-form-item label="标题">
           <el-input v-model="form.title" placeholder="请输入通知标题" />
         </el-form-item>
+        
+        <!-- 🔴 修改点 2：绑定 classification -->
         <el-form-item label="分类">
-          <el-radio-group v-model="form.category">
+          <el-radio-group v-model="form.classification">
             <el-radio-button label="ALL">全校</el-radio-button>
             <el-radio-button label="TEACHING">教学</el-radio-button>
             <el-radio-button label="RESEARCH">科研</el-radio-button>
           </el-radio-group>
         </el-form-item>
+        
         <el-form-item label="正文">
           <el-input v-model="form.content" type="textarea" :rows="6" placeholder="请输入正文..." />
         </el-form-item>
@@ -121,7 +114,8 @@
           <div class="detail-meta">
             <span>发布部门：{{ currentNotice.publisherName }}</span>
             <span>发布时间：{{ currentNotice.createTime?.replace('T', ' ') }}</span>
-            <el-tag size="small">{{ getCategoryText(currentNotice.category) }}</el-tag>
+            <!-- 🔴 修改点 3：显示 classification -->
+            <el-tag size="small">{{ getclassificationText(currentNotice.classification) }}</el-tag>
           </div>
         </div>
       </template>
@@ -148,6 +142,7 @@
 
   </div>
 </template>
+
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import request from '@/utils/request'
@@ -156,27 +151,37 @@ import { ElMessage } from 'element-plus'
 const role = localStorage.getItem('role')
 const isSecretary = computed(() => role && role.startsWith('SEC_'))
 const currentDate = ref(new Date())
-// 新增：需要获取当前用户的 ID，以便判断哪个通知是“我”发的
-// 简单做法：登录时 localStorage 存了 token，我们可以解析 token 或者调 user info 接口
-// 这里为了最快实现，我们假设 localStorage 里存了 userId (你需要去 Login.vue 加一下，或者这里调个接口)
-// 👇 建议修改 Login.vue 把 userId 存进去。如果没有，暂时用 role 判断能否操作也行，后端会拦截的。
 const currentUserId = Number(localStorage.getItem('userId') || 0) 
-// 动态 Header (解决 CSRF 403)
+
 const headers = computed(() => {
   return { Authorization: `Bearer ${localStorage.getItem('token')}` }
 })
 
 // 数据
 const noticeList = ref([])
-const latestNotice = ref(null) // 用于顶部滚动
-const fileList = ref([]) // 用于发布时回显
-//  修改：submitPublish 支持“新增”和“修改”
-const isEditMode = ref(false) // 标记是否为编辑模式
+const latestNotice = ref(null) 
+const fileList = ref([]) 
+const isEditMode = ref(false) 
 const currentEditId = ref(null)
+
+// 🔴 修改点 4：form 结构中的 classification 改为 classification
+const form = reactive({
+  title: '', 
+  classification: 'ALL', // 默认为全校通知
+  content: '', 
+  attachmentUrl: '', 
+  attachmentName: ''
+})
+
 // 点击“发布通知”按钮
 const showPublishDialog = () => {
   isEditMode.value = false
-  form.title = ''; form.content = ''; form.category = 'ALL'; form.attachmentUrl = ''; form.attachmentName = '';
+  // 重置表单
+  form.title = ''; 
+  form.content = ''; 
+  form.classification = 'ALL'; // 重置为默认
+  form.attachmentUrl = ''; 
+  form.attachmentName = '';
   fileList.value = []
   publishVisible.value = true
 }
@@ -187,12 +192,11 @@ const handleEdit = (item) => {
   currentEditId.value = item.id
   // 回填数据
   form.title = item.title
-  form.category = item.category
+  form.classification = item.classification // 🔴 回显 classification
   form.content = item.content
   form.attachmentUrl = item.attachmentUrl
   form.attachmentName = item.attachmentName
   
-  // 回显文件列表
   if (item.attachmentName) {
     fileList.value = [{ name: item.attachmentName, url: item.attachmentUrl }]
   } else {
@@ -214,7 +218,7 @@ const handleDelete = (item) => {
   })
 }
 
-// 提交表单（区分新增/修改）
+// 提交表单
 const submitPublish = () => {
   if (!form.title) return ElMessage.warning('请输入标题')
   
@@ -234,6 +238,7 @@ const submitPublish = () => {
     })
   }
 }
+
 // 获取列表
 const getList = () => {
   request.get('/notice/list').then(res => {
@@ -244,15 +249,16 @@ const getList = () => {
   })
 }
 
-// 辅助函数
-const getCategoryText = (val) => {
+// 🔴 修改点 5：辅助函数适配 classification
+const getclassificationText = (val) => {
   const map = { 'TEACHING': '教学', 'RESEARCH': '科研', 'ALL': '通知' }
   return map[val] || '公告'
 }
-const getCategoryType = (val) => {
+const getclassificationType = (val) => {
   const map = { 'TEACHING': 'warning', 'RESEARCH': 'success', 'ALL': 'primary' }
   return map[val] || 'info'
 }
+
 const formatDate = (timeStr) => {
   if (!timeStr) return ''
   return timeStr.split('T')[0]
@@ -263,16 +269,10 @@ const isNew = (timeStr) => {
   const now = new Date()
   const diffTime = Math.abs(now - date)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return diffDays <= 7 // 7天内算新
+  return diffDays <= 7 
 }
 
-// --- 发布逻辑 ---
 const publishVisible = ref(false)
-const form = reactive({
-  title: '', category: 'ALL', content: '', attachmentUrl: '', attachmentName: ''
-})
-
-
 
 const handleUploadSuccess = (res, file) => {
   if (res.code === 200) {
@@ -283,15 +283,6 @@ const handleUploadSuccess = (res, file) => {
     ElMessage.error('上传失败')
   }
 }
-
-// const submitPublish = () => {
-//   if (!form.title) return ElMessage.warning('请输入标题')
-//   request.post('/notice/add', form).then(() => {
-//     ElMessage.success('发布成功')
-//     publishVisible.value = false
-//     getList()
-//   })
-// }
 
 // --- 详情逻辑 ---
 const detailVisible = ref(false)
@@ -315,15 +306,16 @@ onMounted(() => {
   getList()
 })
 </script>
+
 <style scoped>
 .dashboard-container { padding: 0 10px; }
 
-/* 1. 顶部滚动通知条 - 样式重写 */
+/* 1. 顶部滚动通知条 */
 .notice-bar {
   display: flex;
   align-items: center;
   background: #fff;
-  height: 50px; /* 增高 */
+  height: 50px;
   border-radius: 6px;
   padding: 0 20px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
@@ -331,7 +323,7 @@ onMounted(() => {
   border-left: 5px solid #409EFF;
 }
 .notice-icon {
-  font-size: 18px; /* 图标文字变大 */
+  font-size: 18px;
   font-weight: bold;
   color: #409EFF;
   display: flex;
@@ -352,10 +344,9 @@ onMounted(() => {
   height: 50px;
   line-height: 50px;
   white-space: nowrap;
-  animation: scrollText 20s linear infinite; /* 调慢一点 */
+  animation: scrollText 20s linear infinite;
   color: #333;
 }
-/* 顶部滚动的字体设定 */
 .scroll-date { 
   font-size: 18px; 
   color: #409EFF; 
@@ -363,7 +354,7 @@ onMounted(() => {
   margin-right: 10px; 
 }
 .scroll-title {
-  font-size: 18px; /* 标题变大 */
+  font-size: 18px; 
   font-weight: bold;
 }
 .scroll-content:hover {
@@ -371,7 +362,7 @@ onMounted(() => {
   color: #409EFF;
 }
 
-/* 2. 列表样式 - 样式重写 */
+/* 2. 列表样式 */
 .notice-card { min-height: 550px; }
 .header-title { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
 
@@ -380,7 +371,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 10px; /* 增加行间距 */
+  padding: 18px 10px;
   border-bottom: 1px dashed #e0e0e0;
   cursor: pointer;
   transition: all 0.3s;
@@ -393,10 +384,9 @@ onMounted(() => {
 }
 .item-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
 
-/* 列表内字体设定 */
-.category-tag { font-size: 14px; width: 50px; text-align: center; }
+.classification-tag { font-size: 14px; width: 50px; text-align: center; }
 .item-title { 
-  font-size: 18px; /* 列表标题显著变大 */
+  font-size: 18px;
   color: #2c3e50; 
   font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 450px; 
@@ -407,14 +397,14 @@ onMounted(() => {
 }
 
 .item-right { 
-  font-size: 15px; /* 右侧信息也稍微变大 */
+  font-size: 15px;
   color: #888; display: flex; gap: 20px; white-space: nowrap; align-items: center;
 }
 .action-btns { opacity: 0; transition: opacity 0.3s; margin-left: 10px; background: #fff; border: 1px solid #eee; padding: 0 5px; border-radius: 4px; }
 .notice-item:hover .action-btns { opacity: 1; }
 
 /* 3. 详情页样式 */
-.detail-header h2 { font-size: 24px; margin: 10px 0; } /* 详情标题超大 */
+.detail-header h2 { font-size: 24px; margin: 10px 0; }
 .detail-meta { font-size: 14px; }
 .text-content { font-size: 16px; line-height: 1.8; color: #333; }
 .att-title { font-size: 16px; }

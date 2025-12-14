@@ -162,45 +162,52 @@ const mapEntityToForm = (type, entity) => {
   
   // 1. 先把所有字段浅拷贝（为了获取 id, status, remark 等通用字段）
   const data = { ...entity }
+ // 2. 统一处理 classification (无论后端叫 category 还是 classification)
+  data.classification = entity.classification 
 
-  // 2. 针对不同类型，做特殊字段映射
+  // 3 针对不同类型，做特殊字段映射
+ 
   // 逻辑：前端字段名 = 后端字段名 || 备选后端字段名
   if (type === 'patent') {
-    data.patent_name = entity.name || entity.patentName
-    data.patent_number = entity.patentNo || entity.patentNumber
-    data.patent_type = entity.type || entity.patentType
-    data.apply_date = entity.applyDate
-    data.grant_date = entity.grantDate || entity.authDate // 兼容 authDate
-    data.proof_file = entity.fileUrl || entity.proofFile
+    data.name = entity.name || entity.patentName
+    data.patentNumber = entity.patentNo || entity.patentNumber
+    data.patentType = entity.type || entity.patentType
+    data.applyDate = entity.applyDate
+    data.grantDate = entity.grantDate
+    data.proofFile = entity.fileUrl || entity.proofFile
   } 
   else if (type === 'project') {
-    data.project_name = entity.name || entity.projectName
-    data.project_source = entity.projectSource
-    data.project_level = entity.level || entity.projectLevel
-    data.project_number = entity.projectNumber
-    data.start_date = entity.startDate
-    data.end_date = entity.endDate
+    data.name = entity.name || entity.projectName
+    data.projectSource = entity.projectSource
+    data.projectLevel = entity.level || entity.projectLevel
+    data.projectNumber = entity.projectNumber
+    data.startDate = entity.startDate
+    data.endDate = entity.endDate
     // 兼容不同的附件字段名
-    data.open_file = entity.appFileUrl || entity.openFile
-    data.close_file = entity.closureFileUrl || entity.closeFile
+    data.openFileUrl =  entity.openFileUrl
+    data.closeFileUrl = entity.closeFileUrl 
+    
   }
   else if (type === 'paper') {
-    data.journal_name = entity.journalName
-    data.impact_factor = entity.impactFactor
-    data.publish_date = entity.publishDate
-    data.corresponding_author = entity.correspondingAuthor
-    data.proof_file = entity.fileUrl || entity.proofFile
+    data.journalName = entity.journalName
+    data.impactFactor = entity.impactFactor
+    data.publishDate = entity.publishDate
+    data.correspondingAuthor = entity.correspondingAuthor
+    data.proofFile = entity.fileUrl || entity.proofFile
   }
   else if (type === 'software') {
-    data.software_name = entity.name || entity.softwareName
-    data.register_number = entity.registerNo || entity.registerNumber
-    data.grant_date = entity.grantDate || entity.developDate // 视具体业务兼容
-    data.proof_file = entity.fileUrl || entity.proofFile
+    data.name = entity.name || entity.softwareName
+    data.registerNumber = entity.registerNo || entity.registerNumber
+    data.grantDate = entity.grantDate || entity.developDate // 视具体业务兼容
+    data.proofFile = entity.fileUrl || entity.proofFile
+    data.softwareType = entity.type || entity.softwareType
   }
   else if (type === 'book') {
-    data.book_title = entity.name || entity.bookTitle
-    data.publish_date = entity.publishDate
-    data.proof_file = entity.fileUrl || entity.proofFile
+    data.bookTitle = entity.title || entity.bookTitle
+    data.publishDate = entity.publishDate
+    data.proofFile = entity.fileUrl || entity.proofFile
+    data.bookType = entity.type || entity.bookType
+    data.isbn = entity.isbn
   }
 
   return data
@@ -253,6 +260,7 @@ const submitForm = async (isSubmit) => {
   loading.value = true
   try {
     const payload = { ...form, isSubmit: isSubmit }
+    console.log('提交数据(Payload):', payload)
     await request.post(`/${props.type}/add`, payload)
     ElMessage.success(isSubmit ? `${typeLabel.value}已提交审核` : '草稿已保存')
     emit('success')

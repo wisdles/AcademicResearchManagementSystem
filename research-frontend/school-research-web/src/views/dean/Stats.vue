@@ -131,6 +131,7 @@ const fetchData = async () => {
   try {
     const res = await request.post('/stats/dashboard', query)
     if(res.code === 200) {
+      console.log('仪表盘数据：', res.data)
       dashboardData.value = res.data
       updateCharts(res.data)
     }
@@ -155,7 +156,7 @@ const updateCharts = (data) => {
       itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
       label: { show: false, position: 'center' },
       emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
-      data: Object.entries(data.categoryDistribution || {}).map(([k, v]) => ({ value: v, name: k }))
+      data: Object.entries(data.classificationDistribution || {}).map(([k, v]) => ({ value: v, name: k }))
     }]
   }
   pieChart.setOption(pieOption)
@@ -185,29 +186,29 @@ const updateCharts = (data) => {
   barChart.setOption(barOption)
 
   // === 折线图 (模拟数据) ===
-  // if (!lineChart) lineChart = echarts.init(lineChartRef.value)
-  // lineChart.setOption({
-  //   tooltip: { trigger: 'axis' },
-  //   legend: { data: ['项目', '论文'] },
-  //   xAxis: { type: 'category', boundaryGap: false, data: ['1月', '2月', '3月', '4月', '5月', '6月'] },
-  //   yAxis: { type: 'value' },
-  //   series: [
-  //     { name: '项目', type: 'line', smooth: true, data: [120, 132, 101, 134, 90, 230] },
-  //     { name: '论文', type: 'line', smooth: true, data: [220, 182, 191, 234, 290, 330] }
-  //   ]
-  // })
+  if (!lineChart) lineChart = echarts.init(lineChartRef.value)
+  lineChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['项目', '论文'] },
+    xAxis: { type: 'classification', boundaryGap: false, data: ['1月', '2月', '3月', '4月', '5月', '6月'] },
+    yAxis: { type: 'value' },
+    series: [
+      { name: '项目', type: 'line', smooth: true, data: [120, 132, 101, 134, 90, 230] },
+      { name: '论文', type: 'line', smooth: true, data: [220, 182, 191, 234, 290, 330] }
+    ]
+  })
    // === 折线图 (改为：项目经费 Top 5 教师对比) ===
   // 既然趋势图SQL比较难写，我们把下面这个大图改成“经费排行”或者“成果详情堆叠图”
   if (!lineChart) lineChart = echarts.init(lineChartRef.value)
   
   // 我们利用饼图的数据，做一个简单的柱状展示作为“趋势/分布”替代
-  const categories = Object.keys(data.categoryDistribution || {})
-  const values = Object.values(data.categoryDistribution || {})
+  const categories = Object.keys(data.classificationDistribution || {})
+  const values = Object.values(data.classificationDistribution || {})
 
   lineChart.setOption({
     title: { text: '各类成果数量对比' },
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: categories },
+    xAxis: { type: 'classification', data: categories },
     yAxis: { type: 'value' },
     series: [{
       data: values,
@@ -227,6 +228,10 @@ window.addEventListener('resize', () => {
 })
 
 onMounted(() => {
+    pieChart = echarts.init(pieChartRef.value)
+  barChart = echarts.init(barChartRef.value)
+  lineChart = echarts.init(lineChartRef.value)
+
   fetchColleges()
   fetchData()
 })

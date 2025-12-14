@@ -2,7 +2,8 @@ package com.school.research_system.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("biz_book")
@@ -14,11 +15,11 @@ public class Book {
     private String name;
     private String publisher;
     private String isbn;
-    private Date publishDate;
-    // 需增加: authors, editor, category, level, proofFile, remark.
+    private LocalDate publishDate;
+    // 需增加: authors, editor, classification, level, proofFile, remark.
     private String authors;
     private String editor;
-    private String category;
+    private String bookType;
     private String level;
     private String proofFile;
     private String remark;
@@ -31,10 +32,10 @@ public class Book {
     private Integer status; // 0草稿,1提交,2秘书通过,3院长通过,-1驳回
 
     @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     @TableLogic
     private Integer isDeleted;

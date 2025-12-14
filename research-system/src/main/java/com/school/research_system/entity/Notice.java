@@ -14,7 +14,7 @@ public class Notice {
     private String content; // 公告正文
 
     // 类型: TEACHING(教学), RESEARCH(科研), ALL(全体)
-    private String category;
+    private String classification;
 
     private Long publisherId; // 发布人ID
     private String publisherName; // 发布人姓名 (建议冗余存入，或者查询时关联)

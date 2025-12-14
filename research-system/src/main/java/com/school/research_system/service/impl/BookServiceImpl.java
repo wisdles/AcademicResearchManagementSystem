@@ -2,7 +2,6 @@ package com.school.research_system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.school.research_system.dto.AuditDto;
 import com.school.research_system.dto.BookDto;
 import com.school.research_system.entity.AuditLog;
 import com.school.research_system.entity.Book;
@@ -17,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Service
 public class BookServiceImpl extends ServiceImpl<BookMapper, Book> implements IBookService {
@@ -52,11 +51,11 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, Book> implements IB
         // 注意：Book 实体如果没定义 collegeId 字段，这里就不用设，如果有则设
         // book.setCollegeId(user.getCollegeId());
 
-        book.setUpdateTime(new Date());
+        book.setUpdateTime(LocalDateTime.now());
 
         // 5. 设置状态
         if (Boolean.TRUE.equals(dto.getIsSubmit())) {
-            book.setCreateTime(new Date()); // 提交时设置时间
+            book.setCreateTime(LocalDateTime.now()); // 提交时设置时间
             book.setStatus(1); // 1 = 待秘书审核
         } else {
             book.setStatus(0); // 0 = 草稿
@@ -74,25 +73,25 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, Book> implements IB
             throw new RuntimeException("教材/专著信息不存在");
         }
         BeanUtils.copyProperties(dto, book);
-        book.setUpdateTime(new Date());
+        book.setUpdateTime(LocalDateTime.now());
 
         // 如果是草稿转提交，或者是重新提交
         book.setStatus(dto.getIsSubmit() ? 1 : 0);
         if (dto.getIsSubmit()) {
-            book.setCreateTime(new Date());
+            book.setCreateTime(LocalDateTime.now());
         }
         this.updateById(book);
     }
 
     @Override
     @Transactional
-    public void auditBook(AuditDto dto) {
+    public void auditBook(com.school.research_system.dto.AuditDto dto) {
         // 1. 获取当前操作人
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User operator = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
 
         // 2. 获取教材信息
-        // 注意：AuditDto 里的 projectId 在这里通用指代 targetId
+
         Book book = this.getById(dto.getProjectId());
         if (book == null) {
             throw new RuntimeException("教材信息不存在");

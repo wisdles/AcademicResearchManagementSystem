@@ -8,9 +8,17 @@
         </div>
       </template>
 
-      <el-table :key="type" :data="tableData" stripe border style="width:100%" v-loading="loading">
+      <!-- 加上 key 强制刷新，border 美化 -->
+      <el-table 
+        :key="type"
+        :data="tableData" 
+        stripe 
+        border 
+        style="width:100%" 
+        v-loading="loading"
+      >
         
-        <!-- 1. 动态渲染关键业务列 (根据配置文件) -->
+        <!-- 1. 动态渲染关键业务列 -->
         <el-table-column 
           v-for="col in config.columns" 
           :key="col.prop"
@@ -21,22 +29,22 @@
           show-overflow-tooltip
         />
 
-        <!-- 2. 申报人 (通用) -->
+        <!-- 2. 申报人 -->
         <el-table-column prop="applicantName" label="申报人" width="100" />
           
-        <!-- 3. 类别 (兼容 category 和 classification) -->
-        <el-table-column label="归属" width="100">
+        <!-- 3. 归属 (核心修改) -->
+        <el-table-column label="归属" width="100" align="center">
           <template #default="{ row }">
-             <!-- 优先显示 classification，没有则显示 category -->
-             <el-tag :type="getCategoryType(row)">
-               {{ row.classification || row.category || '未分类' }}
-             </el-tag>
+             <!-- 使用 getclassificationType 获取颜色，使用 getclassificationText 获取中文 -->
+             <el-tag :type="getclassificationType(row)" effect="plain">
+               {{ getclassificationText(row) }}
+             </el-tag> 
           </template>
         </el-table-column>
 
         <el-table-column prop="createTime" label="申报时间" width="170" />
         
-        <!-- 4. 申报材料下载 (动态获取文件字段) -->
+        <!-- 4. 申报材料下载 -->
         <el-table-column label="申报材料" width="120" align="center">
            <template #default="{ row }">
              <el-button 
@@ -97,7 +105,7 @@ import { AUDIT_CONFIG } from '@/data/audit-config.js'
 
 const route = useRoute()
 
-// 1. 获取当前页面类型 (从路由参数获取 type)
+// 1. 获取当前页面类型
 const type = computed(() => route.meta.type || 'project')
 
 // 2. 根据类型获取配置
@@ -108,7 +116,7 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 
 const auditForm = reactive({
-  targetId: null, // 临时存ID
+  targetId: null, 
   isPass: true,
   comment: ''
 })
@@ -117,7 +125,6 @@ const auditForm = reactive({
 const getList = async () => {
   loading.value = true
   try {
-    // 动态请求: /project/audit-list, /paper/audit-list ...
     const res = await request.get(`/${type.value}/audit-list`)
     if (res.code === 200) {
       tableData.value = res.data
@@ -129,7 +136,6 @@ const getList = async () => {
 
 // 获取文件地址
 const getFileUrl = (row) => {
-  // 从配置中读取该类型对应的文件字段名 (appFileUrl 或 proofFile)
   const field = config.value.fileField
   return row[field]
 }
@@ -142,17 +148,29 @@ const downloadFile = (row) => {
   }
 }
 
-// 标签颜色逻辑
-const getCategoryType = (row) => {
-  const val = row.classification || row.category
+// 🟢 核心修改 1：获取中文显示
+const getclassificationText = (row) => {
+  // 优先取 classification，如果没有则取 classification (兼容旧逻辑)
+  const val = row.classification || row.classification
+  const map = {
+    'RESEARCH': '科研',
+    'TEACHING': '教学'
+  }
+  return map[val] || val || '未分类'
+}
+
+// 🟢 核心修改 2：获取标签颜色
+const getclassificationType = (row) => {
+  const val = row.classification || row.classification
+  // 必须判断英文代码，因为数据库存的是英文
   if (val === 'RESEARCH') return '' // 默认蓝色
   if (val === 'TEACHING') return 'success' // 绿色
-  return 'info'
+  return 'info' // 灰色
 }
 
 // 打开审核弹窗
 const openAudit = (row) => {
-  auditForm.targetId = row.id // 暂存 ID
+  auditForm.targetId = row.id 
   auditForm.isPass = true
   auditForm.comment = ''
   dialogVisible.value = true
@@ -164,11 +182,8 @@ const submitAudit = () => {
     return ElMessage.warning('驳回时必须填写审核意见')
   }
   
-  // 构造后端需要的 DTO
-  // 注意：这里需要确认后端 AuditDto 接收的 ID 字段名是 projectId 还是统一叫 id
-  // 根据你之前的代码，似乎都叫 projectId (或者你可以修改后端 DTO 统一叫 id)
+  // 动态构造 payload
   const payload = {
-    // 动态设置 ID 的 key，例如 projectId: 123
     [config.value.idKey]: auditForm.targetId, 
     isPass: auditForm.isPass,
     comment: auditForm.comment
@@ -181,7 +196,7 @@ const submitAudit = () => {
   })
 }
 
-// 监听路由变化自动刷新 (防止同组件切换不刷新)
+// 监听路由变化自动刷新
 watch(() => route.path, () => {
   getList()
 }, { immediate: true })
@@ -189,6 +204,9 @@ watch(() => route.path, () => {
 </script>
 
 <style scoped>
+.audit-container {
+  min-height: 500px; /* 防止闪烁 */
+}
 .card-header {
   display: flex;
   justify-content: space-between;

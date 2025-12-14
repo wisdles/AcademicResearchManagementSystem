@@ -23,7 +23,7 @@ public class Project {
     @TableField(exist = false)
     private String applicantName;
     // 核心分类: TEACHING(教学), RESEARCH(科研)
-    private String category;
+    private String classification;
 
     // 子类型: 纵向/横向/校级/教改
     private String subType;
@@ -36,14 +36,14 @@ public class Project {
     /**
      * 结项证明附件
      */
-    private String closureFileUrl;
+    private String closeFileUrl;
     // =================================
     private BigDecimal funds; // 经费
 
     private LocalDate startDate;
     private LocalDate endDate;
 
-    private String appFileUrl; // 申报书路径
+    private String openFileUrl; // 申报书路径
     private String contractFileUrl; // 合同路径
     // === 新增字段，对应数据库 ===
     private String projectSource;

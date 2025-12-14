@@ -26,14 +26,13 @@ public class Paper {
     private String fileUrl;
     private String ocrContent;
     // 新增字段需增加: issn, pages, partitionInfo, authors, correspondingAuthor,
-    // discipline, category, proofFile, remark.
+    // discipline, classification, proofFile, remark.
     private String issn;
     private String pages;
-    private String partitionInfo;
     private String authors;
     private String correspondingAuthor;
     private String discipline;
-    private String category;
+
     private String proofFile;
     private String remark;
     /**

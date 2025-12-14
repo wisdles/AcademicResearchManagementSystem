@@ -2,7 +2,7 @@ package com.school.research_system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.school.research_system.dto.AuditDto;
+
 import com.school.research_system.dto.PaperDto;
 import com.school.research_system.entity.AuditLog;
 import com.school.research_system.entity.Paper;
@@ -87,7 +87,7 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
 
     @Override
     @Transactional
-    public void auditPaper(AuditDto dto) {
+    public void auditPaper(com.school.research_system.dto.AuditDto dto) {
         // 1. 获取操作人
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User operator = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));

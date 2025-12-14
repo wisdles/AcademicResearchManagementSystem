@@ -22,7 +22,7 @@
         
         <el-table-column label="申报材料" width="150">
            <template #default="{ row }">
-             <el-link type="primary" :href="'http://localhost:8080' + row.appFileUrl" target="_blank">下载申报书</el-link>
+             <el-link type="primary" :href="'http://localhost:8080' + row.closeFileUrl" target="_blank">下载申报书</el-link>
            </template>
         </el-table-column>
 

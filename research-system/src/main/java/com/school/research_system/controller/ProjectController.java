@@ -94,10 +94,10 @@ public class ProjectController {
     // query.eq(Project::getStatus, 2);
     // } else if ("SEC_TEACHING".equals(user.getRoleKey())) {
     // // 教学秘书: 看状态 1 且 类别是 TEACHING
-    // query.eq(Project::getStatus, 1).eq(Project::getCategory, "TEACHING");
+    // query.eq(Project::getStatus, 1).eq(Project::getclassification, "TEACHING");
     // } else if ("SEC_RESEARCH".equals(user.getRoleKey())) {
     // // 科研秘书: 看状态 1 且 类别是 RESEARCH
-    // query.eq(Project::getStatus, 1).eq(Project::getCategory, "RESEARCH");
+    // query.eq(Project::getStatus, 1).eq(Project::getclassification, "RESEARCH");
     // } else {
     // return Result.success(new ArrayList<>()); // 其他人没权限看
     // }
@@ -131,13 +131,13 @@ public class ProjectController {
             // 教学秘书：只看本学院 + 待秘书审批(1) + 教学类
             query.eq(Project::getStatus, 1)
                     .eq(Project::getCollegeId, myCollegeId)
-                    .eq(Project::getCategory, "TEACHING");
+                    .eq(Project::getClassification, "教学");
 
         } else if ("SEC_RESEARCH".equals(role)) {
             // 科研秘书：只看本学院 + 待秘书审批(1) + 科研类
             query.eq(Project::getStatus, 1)
                     .eq(Project::getCollegeId, myCollegeId)
-                    .eq(Project::getCategory, "RESEARCH");
+                    .eq(Project::getClassification, "科研");
 
         } else {
             // 其他角色无权查看审核列表

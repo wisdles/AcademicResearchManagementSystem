@@ -120,7 +120,7 @@ public class NoticeController {
         // 更新字段
         oldNotice.setTitle(notice.getTitle());
         oldNotice.setContent(notice.getContent());
-        oldNotice.setCategory(notice.getCategory());
+        oldNotice.setClassification(notice.getClassification());
         // 如果重新上传了附件
         if (notice.getAttachmentUrl() != null) {
             oldNotice.setAttachmentUrl(notice.getAttachmentUrl());

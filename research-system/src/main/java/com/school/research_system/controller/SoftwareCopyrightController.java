@@ -128,10 +128,10 @@ public class SoftwareCopyrightController {
         // }
         if ("SEC_RESEARCH".equals(role)) {
             // 科研秘书 -> 只看 科研类 + 待初审
-            query.eq(SoftwareCopyright::getStatus, 1).eq(SoftwareCopyright::getCategory, "RESEARCH");
+            query.eq(SoftwareCopyright::getStatus, 1).eq(SoftwareCopyright::getClassification, "科研");
         } else if ("SEC_TEACHING".equals(role)) {
             // 教学秘书 -> 只看 教学类 + 待初审
-            query.eq(SoftwareCopyright::getStatus, 1).eq(SoftwareCopyright::getCategory, "TEACHING");
+            query.eq(SoftwareCopyright::getStatus, 1).eq(SoftwareCopyright::getClassification, "教学");
         } else if ("DEAN".equals(role)) {
             // 院长 -> 看所有 待终审 (不管是科研还是教学，只要秘书过了都归院长)
             query.eq(SoftwareCopyright::getStatus, 2);

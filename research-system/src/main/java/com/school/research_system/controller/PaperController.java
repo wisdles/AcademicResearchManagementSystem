@@ -83,7 +83,7 @@ public class PaperController {
     // query.eq(Paper::getStatus, 2);
     // } else if (user.getRoleKey() != null && user.getRoleKey().startsWith("SEC_"))
     // {
-    // // 秘书看状态 1 (通常论文归科研秘书管，这里简化为所有秘书可见，或者你可以加 .eq(category...) 如果有的话)
+    // // 秘书看状态 1 (通常论文归科研秘书管，这里简化为所有秘书可见，或者你可以加 .eq(classification...) 如果有的话)
     // query.eq(Paper::getStatus, 1);
     // } else {
     // return Result.success(new ArrayList<>());
@@ -139,10 +139,10 @@ public class PaperController {
         // 🟢 核心：根据秘书类型分流
         if ("SEC_RESEARCH".equals(role)) {
             // 科研秘书 -> 只看 科研类 + 待初审
-            query.eq(Paper::getStatus, 1).eq(Paper::getCategory, "RESEARCH");
+            query.eq(Paper::getStatus, 1).eq(Paper::getClassification, "科研");
         } else if ("SEC_TEACHING".equals(role)) {
             // 教学秘书 -> 只看 教学类 + 待初审
-            query.eq(Paper::getStatus, 1).eq(Paper::getCategory, "TEACHING");
+            query.eq(Paper::getStatus, 1).eq(Paper::getClassification, "教学");
         } else if ("DEAN".equals(role)) {
             // 院长 -> 看所有 待终审 (不管是科研还是教学，只要秘书过了都归院长)
             query.eq(Paper::getStatus, 2);

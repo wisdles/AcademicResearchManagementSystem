@@ -113,7 +113,7 @@ public class StatisticsController {
         pieData.put("专利", (int) patentCount);
         pieData.put("软著", (int) softCount);
         pieData.put("专著", (int) bookCount);
-        vo.setCategoryDistribution(pieData);
+        vo.setClassificationDistribution(pieData);
 
         // 5. 计算 Top 10 教师
         Map<Long, Integer> teacherScoreMap = new HashMap<>();

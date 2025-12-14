@@ -5,7 +5,6 @@ import com.school.research_system.common.Result;
 import com.school.research_system.dto.AuditDto;
 import com.school.research_system.dto.BookDto;
 import com.school.research_system.entity.Book;
-
 import com.school.research_system.entity.User;
 import com.school.research_system.service.IBookService;
 import com.school.research_system.service.IUserService;
@@ -95,7 +94,7 @@ public class BookController {
     // query.eq(Book::getStatus, 2);
     // } else if (user.getRoleKey() != null && user.getRoleKey().startsWith("SEC_"))
     // {
-    // // 秘书 (不管是教学还是科研，因为书没有 category，假设所有秘书都能审，或者你可以限定为 SEC_TEACHING)
+    // // 秘书 (不管是教学还是科研，因为书没有 classification，假设所有秘书都能审，或者你可以限定为 SEC_TEACHING)
     // // 这里逻辑设置为：只要是秘书，就看状态 1 的
     // query.eq(Book::getStatus, 1);
     // } else {
@@ -153,11 +152,13 @@ public class BookController {
         // return Result.success(new ArrayList<>());
         // }
         if ("SEC_RESEARCH".equals(role)) {
-            // 科研秘书 -> 只看 待初审
-            query.eq(Book::getStatus, 1);
+            // 科研秘书 -> 只看 待初审Book
+            // query.eq(Book::getStatus, 1);
+            query.eq(Book::getStatus, 1).eq(Book::getClassification, "科研");
         } else if ("SEC_TEACHING".equals(role)) {
             // 教学秘书 -> 只看 待初审
-            query.eq(Book::getStatus, 1);
+            // query.eq(Book::getStatus, 1);
+            query.eq(Book::getStatus, 1).eq(Book::getClassification, "教学");
         } else if ("DEAN".equals(role)) {
             // 院长 -> 看所有 待终审 (不管是科研还是教学，只要秘书过了都归院长)
             query.eq(Book::getStatus, 2);

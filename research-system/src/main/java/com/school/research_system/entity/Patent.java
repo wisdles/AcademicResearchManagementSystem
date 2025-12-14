@@ -16,12 +16,11 @@ public class Patent {
 
     private String name; // 专利名称
     private String patentNo; // 专利号
-    private String category; // 类型: 发明/实用新型/外观
-    private LocalDate authDate; // 授权日期
+    private String patentType; // 类型: 发明/实用新型/外观
+    private LocalDate grantDate; // 授权日期
     private String fileUrl; // 证书文件路径
     // 需需增加: applyDate, grantDate, owner, inventors, proofFile, remark.
     private LocalDate applyDate;
-    private LocalDate grantDate;
     private String owner;
     private String inventors;
     private String proofFile;

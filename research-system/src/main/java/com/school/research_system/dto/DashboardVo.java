@@ -15,7 +15,7 @@ public class DashboardVo {
     private Integer currentMonthNew; // 本月新增数
 
     // 图表数据
-    private Map<String, Integer> categoryDistribution; // 饼图：各类成果占比
+    private Map<String, Integer> classificationDistribution; // 饼图：各类成果占比
     private List<Map<String, Object>> trendData; // 折线图：近期趋势
     private List<Map<String, Object>> topTeachers; // 柱状图：教师Top榜
 }

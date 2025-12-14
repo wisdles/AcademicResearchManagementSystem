@@ -18,10 +18,10 @@ public class SoftwareCopyright {
     private String registerNo; // 登记号
     private LocalDate developDate; // 开发完成日期
     private String fileUrl; // 证书文件
-    // 需增加: grantDate, authors, category, organization, proofFile, remark.
+    // 需增加: grantDate, authors, classification, organization, proofFile, remark.
     private LocalDate grantDate;
     private String authors;
-    private String category;
+    private String softwareType;
     private String organization;
     private String proofFile;
     private String remark;
