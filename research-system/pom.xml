@@ -104,6 +104,24 @@
 		<artifactId>pdfbox</artifactId>
 		<version>2.0.29</version>
 	</dependency>
+	<!-- 核心库 -->
+<dependency>
+    <groupId>io.github.mymonstercat</groupId>
+    <artifactId>rapidocr-onnx-platform</artifactId>
+    <version>0.0.7</version> <!-- 请检查 Maven Central 获取最新版本 -->
+</dependency>
+<!-- 2. ONNX 推理引擎 (包含模型和运行时) -->
+<dependency>
+    <groupId>io.github.mymonstercat</groupId>
+    <artifactId>rapidocr-onnx-platform</artifactId>
+    <version>0.0.7</version>
+</dependency>
+<!-- 图片处理工具 -->
+<dependency>
+    <groupId>cn.hutool</groupId>
+    <artifactId>hutool-all</artifactId>
+    <version>5.8.16</version>
+</dependency>
 	</dependencies>
 
 	<build>

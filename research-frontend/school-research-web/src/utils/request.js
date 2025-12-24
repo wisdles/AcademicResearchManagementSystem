@@ -5,7 +5,7 @@ import router from '@/router'
 // 创建 axios 实例
 const request = axios.create({
   baseURL: 'http://localhost:8080', // 后端地址
-  timeout: 10000
+  timeout: 60000
 })
 
 // 1. 请求拦截器：每次请求自动带上 Token
