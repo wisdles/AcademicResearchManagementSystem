@@ -21,6 +21,7 @@ public class SoftwareCopyrightDto {
     private String proofFile;
 
     private String remark;
+    private String tags; // 标签
     private Boolean isSubmit;
 
     private String classification;// 科学教研分类

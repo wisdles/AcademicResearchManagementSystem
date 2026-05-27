@@ -23,6 +23,7 @@ public class Book {
     private String level;
     private String proofFile;
     private String remark;
+    private String tags; // 标签，多个用逗号分隔
     /**
      * 申报人姓名 (非数据库字段，用于前端展示)
      */

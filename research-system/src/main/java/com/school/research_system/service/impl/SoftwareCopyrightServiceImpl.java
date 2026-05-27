@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.school.research_system.dto.AuditDto;
 import com.school.research_system.dto.SoftwareCopyrightDto;
 import com.school.research_system.entity.AuditLog;
+import com.school.research_system.entity.Message;
 import com.school.research_system.entity.SoftwareCopyright;
 import com.school.research_system.entity.User;
 import com.school.research_system.mapper.AuditLogMapper;
+import com.school.research_system.mapper.MessageMapper;
 import com.school.research_system.mapper.SoftwareCopyrightMapper;
 import com.school.research_system.service.ISoftwareCopyrightService;
 import com.school.research_system.service.IUserService;
@@ -28,6 +30,8 @@ public class SoftwareCopyrightServiceImpl extends ServiceImpl<SoftwareCopyrightM
 
     @Autowired
     private AuditLogMapper auditLogMapper;
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -120,5 +124,15 @@ public class SoftwareCopyrightServiceImpl extends ServiceImpl<SoftwareCopyrightM
         log.setAction(actionCode);
         log.setComment(dto.getComment());
         auditLogMapper.insert(log);
+
+        // 发送审核结果消息给教师
+        Message msg = new Message();
+        msg.setReceiverId(soft.getUserId());
+        msg.setTitle("软著审核结果通知");
+        msg.setContent("您的软著《" + soft.getName() + "》已被" + (Boolean.TRUE.equals(dto.getIsPass()) ? "通过" : "驳回") + "。审核意见：" + (dto.getComment() != null ? dto.getComment() : "无"));
+        msg.setType("AUDIT_RESULT");
+        msg.setRelatedId(soft.getId());
+        msg.setRelatedType("SOFTWARE");
+        messageMapper.insert(msg);
     }
 }

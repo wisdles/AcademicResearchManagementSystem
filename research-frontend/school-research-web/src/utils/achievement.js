@@ -7,6 +7,7 @@ export const ACHIEVEMENT_COLUMNS = {
     { prop: "endDate", label: "结束日期" },
     { prop:"createTime" , label: "创建时间" },
     { prop: "status", label: "状态" },
+    { prop: "tags", label: "标签" },
     { prop: "classification", label: "成果分类" }
   ],
   paper: [
@@ -19,6 +20,7 @@ export const ACHIEVEMENT_COLUMNS = {
     { prop: "publishDate", label: "发表日期" },
    { prop: "status", label: "状态" },
     { prop:"createTime" , label: "创建时间" },
+    { prop: "tags", label: "标签" },
     { prop: "classification", label: "成果分类" }
   ],
   patent: [
@@ -27,6 +29,7 @@ export const ACHIEVEMENT_COLUMNS = {
     { prop: "grantDate", label: "授权日期" },
    { prop: "status", label: "状态" },
     { prop:"createTime" , label: "创建时间" },
+    { prop: "tags", label: "标签" },
     { prop: "classification", label: "成果分类" }
   ],
   software: [
@@ -36,6 +39,7 @@ export const ACHIEVEMENT_COLUMNS = {
     { prop: "status", label: "状态" },
     { prop:"createTime" , label: "创建时间" },
     { prop: "softwareType", label: "软件类别" },
+    { prop: "tags", label: "标签" },
     {prop: "classification", label: "成果分类" }
   ],
   book: [
@@ -46,6 +50,41 @@ export const ACHIEVEMENT_COLUMNS = {
     { prop: "publishDate", label: "出版日期" },
    { prop: "status", label: "状态" },
     { prop:"createTime" , label: "创建时间" },
+    { prop: "tags", label: "标签" },
+    { prop: "classification", label: "成果分类" }
+  ],
+  award: [
+    { prop: "awardName", label: "获奖名称" },
+    { prop: "awardLevel", label: "获奖级别" },
+    { prop: "awardGrade", label: "获奖等级" },
+    { prop: "awardUnit", label: "颁奖单位" },
+    { prop: "awardDate", label: "获奖日期" },
+    { prop: "ranking", label: "本人排名" },
+    { prop: "status", label: "状态" },
+    { prop: "createTime", label: "创建时间" },
+    { prop: "tags", label: "标签" },
+    { prop: "classification", label: "成果分类" }
+  ],
+  competition: [
+    { prop: "name", label: "竞赛名称" },
+    { prop: "competitionLevel", label: "竞赛级别" },
+    { prop: "awardLevel", label: "获奖级别" },
+    { prop: "awardGrade", label: "获奖等级" },
+    { prop: "awardDate", label: "获奖日期" },
+    { prop: "studentName", label: "学生姓名" },
+    { prop: "status", label: "状态" },
+    { prop: "createTime", label: "创建时间" },
+    { prop: "tags", label: "标签" },
+    { prop: "classification", label: "成果分类" }
+  ],
+  course: [
+    { prop: "courseName", label: "课程名称" },
+    { prop: "courseType", label: "课程类型" },
+    { prop: "courseLevel", label: "课程级别" },
+    { prop: "startDate", label: "开始日期" },
+    { prop: "status", label: "状态" },
+    { prop: "createTime", label: "创建时间" },
+    { prop: "tags", label: "标签" },
     { prop: "classification", label: "成果分类" }
   ]
 }

@@ -52,6 +52,7 @@ public class Project {
     private String participants;
     private String discipline;
     private String remark;
+    private String tags; // 标签，多个用逗号分隔
     /**
      * 状态:
      * 0-暂存(草稿)

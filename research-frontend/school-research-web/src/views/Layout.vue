@@ -47,6 +47,18 @@
           <el-menu-item index="/achievement?type=book">
             <el-icon><Document /></el-icon> <span>专著管理</span>
           </el-menu-item>
+          <el-menu-item index="/achievement?type=award">
+            <el-icon><TrophyBase /></el-icon> <span>获奖管理</span>
+          </el-menu-item>
+          <el-menu-item index="/achievement?type=competition">
+            <el-icon><TrophyBase /></el-icon> <span>竞赛管理</span>
+          </el-menu-item>
+          <el-menu-item index="/achievement?type=course">
+            <el-icon><Reading /></el-icon> <span>课程管理</span>
+          </el-menu-item>
+          <el-menu-item index="/teacher/stats">
+            <el-icon><DataAnalysis /></el-icon> <span>业绩看板</span>
+          </el-menu-item>
         </template>
         <!-- 秘书菜单 -->
         <template v-if="role.startsWith('SEC_')">
@@ -65,7 +77,18 @@
           <el-menu-item index="/audit/book">
             <el-icon><Stamp /></el-icon> <span>专著审核</span>
           </el-menu-item>
-        
+          <el-menu-item index="/audit/award">
+            <el-icon><Stamp /></el-icon> <span>获奖审核</span>
+          </el-menu-item>
+          <el-menu-item index="/audit/competition">
+            <el-icon><Stamp /></el-icon> <span>竞赛审核</span>
+          </el-menu-item>
+          <el-menu-item index="/audit/course">
+            <el-icon><Stamp /></el-icon> <span>课程审核</span>
+          </el-menu-item>
+          <el-menu-item index="/secretary/urge">
+            <el-icon><Bell /></el-icon> <span>催报管理</span>
+          </el-menu-item>
         </template>
 
         <!-- 院长菜单 -->
@@ -85,11 +108,23 @@
           <el-menu-item index="/audit/book">
             <el-icon><Stamp /></el-icon> <span>终审专著</span>
           </el-menu-item>
+          <el-menu-item index="/audit/award">
+            <el-icon><Stamp /></el-icon> <span>终审获奖</span>
+          </el-menu-item>
+          <el-menu-item index="/audit/competition">
+            <el-icon><Stamp /></el-icon> <span>终审竞赛</span>
+          </el-menu-item>
+          <el-menu-item index="/audit/course">
+            <el-icon><Stamp /></el-icon> <span>终审课程</span>
+          </el-menu-item>
           <el-menu-item index="/dean/stats">
             <el-icon><PieChart /></el-icon> <span>科研统计</span>
           </el-menu-item>
           <el-menu-item index="/dean/data-export">
             <el-icon><Download /></el-icon> <span>数据导出</span>
+          </el-menu-item>
+          <el-menu-item index="/dean/performance">
+            <el-icon><DataAnalysis /></el-icon> <span>绩效考核</span>
           </el-menu-item>
         </template>
 
@@ -134,6 +169,11 @@
 
         <!-- 右侧用户信息下拉 -->
         <div class="header-right">
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" style="margin-right: 20px">
+            <el-button circle @click="router.push('/messages')">
+              <el-icon><Bell /></el-icon>
+            </el-button>
+          </el-badge>
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               {{ realName }} ({{ roleText }})
@@ -157,8 +197,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import request from '@/utils/request'
 // 处理下拉菜单点击
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -189,6 +230,19 @@ const logout = () => {
   localStorage.clear()
   router.push('/login')
 }
+
+// 消息未读数
+const unreadCount = ref(0)
+const fetchUnreadCount = async () => {
+  try {
+    const res = await request.get('/message/unread-count')
+    if (res.code === 200 && res.data) unreadCount.value = res.data.count || res.data
+  } catch(e) {}
+}
+onMounted(() => {
+  fetchUnreadCount()
+  setInterval(fetchUnreadCount, 30000)
+})
 </script>
 
 <style scoped>

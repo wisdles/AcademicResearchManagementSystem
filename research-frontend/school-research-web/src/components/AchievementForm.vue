@@ -200,7 +200,7 @@ const clearOcrText = () => {
 /* 动态字段与标题 */
 const fields = computed(() => FORM_FIELDS[props.type] || [])
 const typeLabel = computed(() => {
-  const map = { paper: "论文", project: "项目", software: "软著", patent: "专利", book: "专著" }
+  const map = { paper: "论文", project: "项目", software: "软著", patent: "专利", book: "专著", award: "获奖", competition: "竞赛", course: "课程" }
   return map[props.type] || "成果"
 })
 
@@ -261,6 +261,21 @@ const mapEntityToForm = (type, entity) => {
     data.proofFile = entity.fileUrl || entity.proofFile
     data.bookType = entity.type || entity.bookType
     data.isbn = entity.isbn
+  }
+  else if (type === 'award') {
+    data.awardName = entity.awardName
+    data.awardDate = entity.awardDate
+    data.proofFile = entity.proofFile
+  }
+  else if (type === 'competition') {
+    data.name = entity.name
+    data.awardDate = entity.awardDate
+    data.certFileUrl = entity.certFileUrl
+  }
+  else if (type === 'course') {
+    data.courseName = entity.courseName
+    data.startDate = entity.startDate
+    data.proofFile = entity.proofFile
   }
   return data
 }

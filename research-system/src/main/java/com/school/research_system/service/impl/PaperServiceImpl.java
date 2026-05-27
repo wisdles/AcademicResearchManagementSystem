@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.school.research_system.dto.PaperDto;
 import com.school.research_system.entity.AuditLog;
+import com.school.research_system.entity.Message;
 import com.school.research_system.entity.Paper;
 import com.school.research_system.entity.User;
 import com.school.research_system.mapper.AuditLogMapper;
+import com.school.research_system.mapper.MessageMapper;
 import com.school.research_system.mapper.PaperMapper;
 import com.school.research_system.service.IPaperService;
 import com.school.research_system.service.IUserService;
@@ -28,6 +30,8 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
     // 🔴 记得注入日志 Mapper
     @Autowired
     private AuditLogMapper auditLogMapper;
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -144,5 +148,15 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
         log.setComment(dto.getComment());
 
         auditLogMapper.insert(log);
+
+        // 发送审核结果消息给教师
+        Message msg = new Message();
+        msg.setReceiverId(paper.getUserId());
+        msg.setTitle("论文审核结果通知");
+        msg.setContent("您的论文《" + paper.getTitle() + "》已被" + (Boolean.TRUE.equals(dto.getIsPass()) ? "通过" : "驳回") + "。审核意见：" + (dto.getComment() != null ? dto.getComment() : "无"));
+        msg.setType("AUDIT_RESULT");
+        msg.setRelatedId(paper.getId());
+        msg.setRelatedType("PAPER");
+        messageMapper.insert(msg);
     }
 }

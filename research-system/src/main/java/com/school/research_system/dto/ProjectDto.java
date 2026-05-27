@@ -36,5 +36,7 @@ public class ProjectDto {
     // 前端: classification -> 后端: classification (TEACHING/RESEARCH)
     private String classification;
 
+    private String tags; // 标签
+
     private Boolean isSubmit; // 必须有，控制草稿还是提交
 }

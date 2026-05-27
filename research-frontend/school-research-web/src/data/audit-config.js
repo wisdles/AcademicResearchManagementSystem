@@ -73,5 +73,43 @@ export const AUDIT_CONFIG = {
       { prop: 'publisher', label: '出版社', width: 150 },
       { prop: 'publishDate', label: '出版日期', width: 120 }
     ]
+  },
+
+  // 6. 获奖 (Award)
+  award: {
+    label: '获奖',
+    idKey: 'projectId',
+    fileField: 'proofFile',
+    columns: [
+      { prop: 'awardName', label: '获奖名称', minWidth: 200 },
+      { prop: 'awardLevel', label: '获奖级别', width: 120 },
+      { prop: 'awardGrade', label: '获奖等级', width: 120 },
+      { prop: 'awardUnit', label: '颁奖单位', width: 150 }
+    ]
+  },
+
+  // 7. 竞赛 (Competition)
+  competition: {
+    label: '竞赛',
+    idKey: 'projectId',
+    fileField: 'certFileUrl',
+    columns: [
+      { prop: 'name', label: '竞赛名称', minWidth: 200 },
+      { prop: 'competitionLevel', label: '竞赛级别', width: 120 },
+      { prop: 'awardGrade', label: '获奖等级', width: 120 },
+      { prop: 'studentName', label: '学生姓名', width: 100 }
+    ]
+  },
+
+  // 8. 课程 (Course)
+  course: {
+    label: '课程',
+    idKey: 'projectId',
+    fileField: 'proofFile',
+    columns: [
+      { prop: 'courseName', label: '课程名称', minWidth: 200 },
+      { prop: 'courseType', label: '课程类型', width: 120 },
+      { prop: 'courseLevel', label: '课程级别', width: 120 }
+    ]
   }
 }

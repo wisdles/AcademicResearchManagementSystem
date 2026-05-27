@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.school.research_system.dto.AuditDto;
 import com.school.research_system.dto.PatentDto;
 import com.school.research_system.entity.AuditLog;
+import com.school.research_system.entity.Message;
 import com.school.research_system.entity.Patent;
 import com.school.research_system.entity.User;
 import com.school.research_system.mapper.AuditLogMapper;
+import com.school.research_system.mapper.MessageMapper;
 import com.school.research_system.mapper.PatentMapper;
 import com.school.research_system.service.IPatentService;
 import com.school.research_system.service.IUserService;
@@ -27,6 +29,8 @@ public class PatentServiceImpl extends ServiceImpl<PatentMapper, Patent> impleme
 
     @Autowired
     private AuditLogMapper auditLogMapper;
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -121,5 +125,15 @@ public class PatentServiceImpl extends ServiceImpl<PatentMapper, Patent> impleme
         log.setAction(actionCode);
         log.setComment(dto.getComment());
         auditLogMapper.insert(log);
+
+        // 发送审核结果消息给教师
+        Message msg = new Message();
+        msg.setReceiverId(patent.getUserId());
+        msg.setTitle("专利审核结果通知");
+        msg.setContent("您的专利《" + patent.getName() + "》已被" + (Boolean.TRUE.equals(dto.getIsPass()) ? "通过" : "驳回") + "。审核意见：" + (dto.getComment() != null ? dto.getComment() : "无"));
+        msg.setType("AUDIT_RESULT");
+        msg.setRelatedId(patent.getId());
+        msg.setRelatedType("PATENT");
+        messageMapper.insert(msg);
     }
 }

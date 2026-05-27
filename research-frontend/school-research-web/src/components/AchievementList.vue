@@ -38,6 +38,7 @@
           </template>
           <!-- 审核中或已通过 -->
           <template v-else>
+             <el-button v-if="scope.row.status === 1" link type="warning" size="small" @click="handleWithdraw(scope.row)">撤回</el-button>
              <el-button link type="info" size="small" disabled>查看详情</el-button>
           </template>
         </template>
@@ -64,7 +65,7 @@ const columns = computed(() => ACHIEVEMENT_COLUMNS[props.type] || [])
 
 // 标题
 const typeLabel = computed(() => {
-  const map = { paper: "论文", project: "项目", software: "软著", patent: "专利", book: "专著" }
+  const map = { paper: "论文", project: "项目", software: "软著", patent: "专利", book: "专著", award: "获奖", competition: "竞赛", course: "课程" }
   return map[props.type] || "成果"
 })
 
@@ -126,6 +127,17 @@ const handleDelete = (row) => {
       console.error(e)
     }
   })
+}
+
+// 撤回：将待秘书审核状态的成果撤回为草稿
+const handleWithdraw = (row) => {
+  ElMessageBox.confirm('确认撤回该条申报吗？撤回后状态将恢复为草稿。', '提示', {
+    type: 'warning'
+  }).then(async () => {
+    await request.put(`/${props.type}/withdraw/${row.id}`)
+    ElMessage.success("已撤回")
+    fetchData()
+  }).catch(() => {})
 }
 
 // 初始化

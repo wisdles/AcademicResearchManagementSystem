@@ -22,8 +22,9 @@ export const FORM_FIELDS = {
       ]
     },
     { key: "proofFile", label: "证明文件", type: "upload", required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔，如：重点,核心期刊" },
     { key: "remark", label: "备注说明", type: "textarea" },
-     
+
   ],
   project: [
     { key: "name", label: "项目名称", type: "input", required: true },
@@ -48,6 +49,7 @@ export const FORM_FIELDS = {
     },
     { key: "openFileUrl", label: "开题证明", type: "upload" },
     { key: "closeFileUrl", label: "结题证明", type: "upload" ,   required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
     { key: "remark", label: "备注说明", type: "textarea" },
    
 
@@ -69,9 +71,9 @@ export const FORM_FIELDS = {
       ]
     },
     { key: "proofFile", label: "证书文件", type: "upload" ,required: true },
-    
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
     { key: "remark", label: "备注说明", type: "textarea" },
-    
+
   ],
   patent: [
     { key: "name", label: "专利名称", type: "input", required: true },
@@ -94,6 +96,7 @@ export const FORM_FIELDS = {
       ]
     },
     { key: "proofFile", label: "授权证明文件", type: "upload", required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
     { key: "remark", label: "备注说明", type: "textarea" }
   ],
   book: [
@@ -116,7 +119,71 @@ export const FORM_FIELDS = {
       ]
     },
     { key: "proofFile", label: "证明文件", type: "upload" , required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
     { key: "remark", label: "备注说明", type: "textarea" }
-     
+
+  ],
+  award: [
+    { key: "awardName", label: "获奖名称", type: "input", required: true },
+    { key: "awardLevel", label: "获奖级别", type: "select", options: ["国家级","省部级","市厅级","校级"], required: true },
+    { key: "awardGrade", label: "获奖等级", type: "select", options: ["一等奖","二等奖","三等奖"], required: true },
+    { key: "awardUnit", label: "颁奖单位", type: "input", required: true },
+    { key: "awardDate", label: "获奖日期", type: "date", required: true },
+    { key: "ranking", label: "本人排名", type: "input" },
+    {
+      key: "classification",
+      label: "成果分类",
+      type: "select",
+      required: true,
+      options: [
+        { label: "科研成果", value: "科研" },
+        { label: "教学成果", value: "教学" }
+      ]
+    },
+    { key: "proofFile", label: "证明文件", type: "upload", required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
+    { key: "remark", label: "备注说明", type: "textarea" }
+  ],
+  competition: [
+    { key: "name", label: "竞赛名称", type: "input", required: true },
+    { key: "competitionLevel", label: "竞赛级别", type: "select", options: ["国家级","省部级","校级"], required: true },
+    { key: "awardLevel", label: "获奖级别", type: "select", options: ["国家级","省部级","校级"], required: true },
+    { key: "awardGrade", label: "获奖等级", type: "select", options: ["一等奖","二等奖","三等奖"], required: true },
+    { key: "awardDate", label: "获奖日期", type: "date", required: true },
+    { key: "studentName", label: "学生姓名", type: "input" },
+    { key: "ranking", label: "本人排名", type: "input" },
+    {
+      key: "classification",
+      label: "成果分类",
+      type: "select",
+      required: true,
+      options: [
+        { label: "科研成果", value: "科研" },
+        { label: "教学成果", value: "教学" }
+      ]
+    },
+    { key: "certFileUrl", label: "证书文件", type: "upload", required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
+    { key: "remark", label: "备注说明", type: "textarea" }
+  ],
+  course: [
+    { key: "courseName", label: "课程名称", type: "input", required: true },
+    { key: "courseType", label: "课程类型", type: "select", options: ["精品课程","一流课程","思政示范课","教改课程"], required: true },
+    { key: "courseLevel", label: "课程级别", type: "select", options: ["国家级","省级","校级"], required: true },
+    { key: "startDate", label: "开始日期", type: "date", required: true },
+    { key: "description", label: "课程描述", type: "textarea" },
+    {
+      key: "classification",
+      label: "成果分类",
+      type: "select",
+      required: true,
+      options: [
+        { label: "科研成果", value: "科研" },
+        { label: "教学成果", value: "教学" }
+      ]
+    },
+    { key: "proofFile", label: "证明文件", type: "upload", required: true },
+    { key: "tags", label: "标签", type: "input", placeholder: "多个标签用逗号分隔" },
+    { key: "remark", label: "备注说明", type: "textarea" }
   ]
 }

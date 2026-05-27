@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.school.research_system.dto.ProjectDto;
 import com.school.research_system.entity.AuditLog;
+import com.school.research_system.entity.Message;
 import com.school.research_system.entity.Project;
 import com.school.research_system.entity.User;
 import com.school.research_system.mapper.ProjectMapper;
@@ -87,6 +88,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     // 1. 在类开头注入 Mapper
     @Autowired
     private com.school.research_system.mapper.AuditLogMapper auditLogMapper;
+    @Autowired
+    private com.school.research_system.mapper.MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -153,5 +156,15 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         log.setComment(dto.getComment());
 
         auditLogMapper.insert(log);
+
+        // 发送审核结果消息给教师
+        Message msg = new Message();
+        msg.setReceiverId(project.getUserId());
+        msg.setTitle("项目审核结果通知");
+        msg.setContent("您的项目《" + project.getName() + "》已被" + (Boolean.TRUE.equals(dto.getIsPass()) ? "通过" : "驳回") + "。审核意见：" + (dto.getComment() != null ? dto.getComment() : "无"));
+        msg.setType("AUDIT_RESULT");
+        msg.setRelatedId(project.getId());
+        msg.setRelatedType("PROJECT");
+        messageMapper.insert(msg);
     }
 }

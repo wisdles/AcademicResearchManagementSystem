@@ -2,8 +2,10 @@ package com.school.research_system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.school.research_system.common.Result;
+import com.school.research_system.entity.Message;
 import com.school.research_system.entity.Notice;
 import com.school.research_system.entity.User;
+import com.school.research_system.mapper.MessageMapper;
 import com.school.research_system.service.INoticeService;
 import com.school.research_system.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/notice")
@@ -20,6 +23,8 @@ public class NoticeController {
     private INoticeService noticeService;
     @Autowired
     private IUserService userService;
+    @Autowired
+    private MessageMapper messageMapper;
 
     // 1. 发布通知 (仅秘书)
     @PostMapping("/add")
@@ -129,6 +134,39 @@ public class NoticeController {
 
         noticeService.updateById(oldNotice);
         return Result.success("修改成功");
+    }
+
+    // 6. 催报功能：秘书向本院教师发送催报消息
+    @PostMapping("/urge")
+    public Result<String> urge(@RequestBody Map<String, String> params) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User operator = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        if (operator.getRoleKey() == null || !operator.getRoleKey().startsWith("SEC_")) {
+            return Result.error("只有秘书可以催报");
+        }
+
+        String achievementType = params.get("achievementType"); // 成果类型，如project, paper等
+        String typeLabel = params.get("typeLabel"); // 中文名称，如"项目"
+
+        // 查询本院所有教师
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, operator.getCollegeId())
+                .eq(User::getRoleKey, "TEACHER"));
+
+        int count = 0;
+        for (User teacher : teachers) {
+            Message msg = new Message();
+            msg.setSenderId(operator.getId());
+            msg.setReceiverId(teacher.getId());
+            msg.setTitle("催报通知");
+            msg.setContent("请您尽快提交" + typeLabel + "成果，谢谢配合！");
+            msg.setType("URGE");
+            messageMapper.insert(msg);
+            count++;
+        }
+
+        return Result.success("已成功向" + count + "位教师发送催报通知");
     }
 
 }
