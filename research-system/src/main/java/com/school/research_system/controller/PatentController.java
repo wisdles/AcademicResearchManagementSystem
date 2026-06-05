@@ -45,6 +45,22 @@ public class PatentController {
         return Result.success("删除成功");
     }
 
+    // 撤回提交
+    @PutMapping("/withdraw/{id}")
+    public Result<String> withdraw(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        Patent patent = patentService.getById(id);
+        if (patent == null) return Result.error("记录不存在");
+        if (!patent.getUserId().equals(user.getId())) return Result.error("无权操作");
+        if (patent.getStatus() != 1) return Result.error("只有待秘书审核状态才能撤回");
+
+        patent.setStatus(0);
+        patentService.updateById(patent);
+        return Result.success("撤回成功");
+    }
+
     @GetMapping("/my-list")
     public Result<List<Patent>> myList() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

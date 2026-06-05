@@ -50,6 +50,22 @@ public class BookController {
         return Result.success("删除成功");
     }
 
+    // 撤回提交
+    @PutMapping("/withdraw/{id}")
+    public Result<String> withdraw(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        Book book = bookService.getById(id);
+        if (book == null) return Result.error("记录不存在");
+        if (!book.getUserId().equals(user.getId())) return Result.error("无权操作");
+        if (book.getStatus() != 1) return Result.error("只有待秘书审核状态才能撤回");
+
+        book.setStatus(0);
+        bookService.updateById(book);
+        return Result.success("撤回成功");
+    }
+
     // 查询我的教材列表
     @GetMapping("/my-list")
     public Result<List<Book>> myList() {

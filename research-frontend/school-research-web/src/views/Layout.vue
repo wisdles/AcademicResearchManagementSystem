@@ -59,6 +59,9 @@
           <el-menu-item index="/teacher/stats">
             <el-icon><DataAnalysis /></el-icon> <span>业绩看板</span>
           </el-menu-item>
+          <el-menu-item index="/teacher/profile">
+            <el-icon><User /></el-icon> <span>学术主页</span>
+          </el-menu-item>
         </template>
         <!-- 秘书菜单 -->
         <template v-if="role.startsWith('SEC_')">
@@ -125,6 +128,12 @@
           </el-menu-item>
           <el-menu-item index="/dean/performance">
             <el-icon><DataAnalysis /></el-icon> <span>绩效考核</span>
+          </el-menu-item>
+          <el-menu-item index="/dean/target">
+            <el-icon><Aim /></el-icon> <span>年度目标</span>
+          </el-menu-item>
+          <el-menu-item index="/dean/analysis">
+            <el-icon><TrendCharts /></el-icon> <span>决策分析</span>
           </el-menu-item>
         </template>
 
@@ -200,6 +209,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '@/utils/request'
+import { DataLine, DocumentAdd, Picture, Document, TrophyBase, Reading, Stamp, Bell, PieChart, Download, DataAnalysis, User, School, ArrowDown, Aim, TrendCharts } from '@element-plus/icons-vue'
 // 处理下拉菜单点击
 const handleCommand = (command) => {
   if (command === 'logout') {

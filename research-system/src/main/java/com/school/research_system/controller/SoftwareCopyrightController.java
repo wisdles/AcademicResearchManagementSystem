@@ -43,6 +43,22 @@ public class SoftwareCopyrightController {
         return Result.success("删除成功");
     }
 
+    // 撤回提交
+    @PutMapping("/withdraw/{id}")
+    public Result<String> withdraw(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        SoftwareCopyright entity = softService.getById(id);
+        if (entity == null) return Result.error("记录不存在");
+        if (!entity.getUserId().equals(user.getId())) return Result.error("无权操作");
+        if (entity.getStatus() != 1) return Result.error("只有待秘书审核状态才能撤回");
+
+        entity.setStatus(0);
+        softService.updateById(entity);
+        return Result.success("撤回成功");
+    }
+
     @GetMapping("/my-list")
     public Result<List<SoftwareCopyright>> myList() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

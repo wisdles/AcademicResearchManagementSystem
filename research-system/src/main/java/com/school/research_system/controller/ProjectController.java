@@ -50,6 +50,22 @@ public class ProjectController {
         return Result.success("删除成功");
     }
 
+    // 撤回提交
+    @PutMapping("/withdraw/{id}")
+    public Result<String> withdraw(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        Project project = projectService.getById(id);
+        if (project == null) return Result.error("记录不存在");
+        if (!project.getUserId().equals(user.getId())) return Result.error("无权操作");
+        if (project.getStatus() != 1) return Result.error("只有待秘书审核状态才能撤回");
+
+        project.setStatus(0);
+        projectService.updateById(project);
+        return Result.success("撤回成功");
+    }
+
     // 查询我的项目列表
     @GetMapping("/my-list")
     public Result<List<Project>> myList() {

@@ -1,0 +1,13 @@
+{
+  "tasks": [
+    {
+      "id": "7111f6a1",
+      "cron": "29 20 26 5 *",
+      "prompt": "请继续完成高校科研信息管理系统的开发。当前进度在 Day 4（教师业绩看板 + 消息中心 backend 已完成，还需要：添加 teacher-dashboard API 到 StatisticsController，添加 MessageCenter 和 TeacherStats 的 route，添加 Layout 消息角标）。然后继续 Day 5（审核消息集成 + 催报管理）、Day 6（绩效考核 + 成果标签）、Day 7（测试修复 + GitHub 上传到 wisdles）。请从上次中断处继续执行。",
+      "createdAt": 1779799125890,
+      "createdBySessionId": "b479a20b-ebec-4ef6-ad8f-da1af5165ee2",
+      "createdByPid": 17612,
+      "createdByProcStart": "639162666922208240"
+    }
+  ]
+}

@@ -45,6 +45,11 @@ const router = createRouter({
           meta: { title: '个人业绩看板' }
         },
         {
+          path: 'teacher/profile',
+          component: () => import('@/views/teacher/AcademicProfile.vue'),
+          meta: { title: '学术主页' }
+        },
+        {
           path: 'messages',
           component: () => import('../views/MessageCenter.vue'),
           meta: { title: '消息中心' }
@@ -58,6 +63,16 @@ const router = createRouter({
           path: 'dean/performance',
           component: () => import('@/views/dean/Performance.vue'),
           meta: { title: '绩效考核' }
+        },
+        {
+          path: 'dean/target',
+          component: () => import('@/views/dean/TargetProgress.vue'),
+          meta: { title: '年度目标' }
+        },
+        {
+          path: 'dean/analysis',
+          component: () => import('@/views/dean/DecisionSupport.vue'),
+          meta: { title: '决策分析' }
         },
         {
           path: 'user/manage',

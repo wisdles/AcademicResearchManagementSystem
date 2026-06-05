@@ -39,6 +39,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import request from '@/utils/request'
+import { DataAnalysis } from '@element-plus/icons-vue'
 
 const pieChartRef = ref(null)
 const barChartRef = ref(null)

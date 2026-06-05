@@ -1,0 +1,207 @@
+package com.school.research_system.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.school.research_system.common.Result;
+import com.school.research_system.entity.*;
+import com.school.research_system.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+
+/**
+ * 院长决策支持 + 年度考核目标管理
+ */
+@RestController
+@RequestMapping("/dean")
+public class DeanAnalysisController {
+
+    @Autowired private IUserService userService;
+    @Autowired private IProjectService projectService;
+    @Autowired private IPaperService paperService;
+    @Autowired private IPatentService patentService;
+    @Autowired private ISoftwareCopyrightService softService;
+    @Autowired private IBookService bookService;
+    @Autowired private IAwardService awardService;
+    @Autowired private ICompetitionService competitionService;
+    @Autowired private ICourseService courseService;
+    @Autowired private ICollegeService collegeService;
+    @Autowired private IAnnualTargetService annualTargetService;
+
+    // 年度考核目标设置
+    @PostMapping("/target/save")
+    public Result<String> saveTarget(@RequestBody Map<String, Object> params) {
+        Long collegeId = Long.valueOf(params.get("collegeId").toString());
+        Integer year = Integer.valueOf(params.get("year").toString());
+
+        LambdaQueryWrapper<AnnualTarget> q = new LambdaQueryWrapper<>();
+        q.eq(AnnualTarget::getCollegeId, collegeId).eq(AnnualTarget::getYear, year);
+        AnnualTarget t = annualTargetService.getOne(q);
+        if (t == null) {
+            t = new AnnualTarget();
+            t.setCollegeId(collegeId);
+            t.setYear(year);
+        }
+        t.setProjectTarget(getInt(params, "projectTarget"));
+        t.setPaperTarget(getInt(params, "paperTarget"));
+        t.setPatentTarget(getInt(params, "patentTarget"));
+        t.setSoftTarget(getInt(params, "softTarget"));
+        t.setBookTarget(getInt(params, "bookTarget"));
+        t.setAwardTarget(getInt(params, "awardTarget"));
+        t.setCompetitionTarget(getInt(params, "competitionTarget"));
+        t.setCourseTarget(getInt(params, "courseTarget"));
+        annualTargetService.saveOrUpdate(t);
+        return Result.success("保存成功");
+    }
+
+    // 获取年度目标
+    @GetMapping("/target/{collegeId}/{year}")
+    public Result<AnnualTarget> getTarget(@PathVariable Long collegeId, @PathVariable Integer year) {
+        LambdaQueryWrapper<AnnualTarget> q = new LambdaQueryWrapper<>();
+        q.eq(AnnualTarget::getCollegeId, collegeId).eq(AnnualTarget::getYear, year);
+        return Result.success(annualTargetService.getOne(q));
+    }
+
+    // 年度目标完成度
+    @GetMapping("/target/progress/{collegeId}/{year}")
+    public Result<Map<String, Object>> targetProgress(@PathVariable Long collegeId, @PathVariable Integer year) {
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, collegeId).eq(User::getRoleKey, "TEACHER"));
+        List<Long> ids = teachers.stream().map(User::getId).toList();
+
+        int proj = countAll(projectService, ids);
+        int paper = countAll(paperService, ids);
+        int patent = countAll(patentService, ids);
+        int soft = countAll(softService, ids);
+        int book = countAll(bookService, ids);
+        int award = countAll(awardService, ids);
+        int comp = countAll(competitionService, ids);
+        int course = countAll(courseService, ids);
+
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("project", map("项目", proj, 0));
+        r.put("paper", map("论文", paper, 0));
+        r.put("patent", map("专利", patent, 0));
+        r.put("software", map("软著", soft, 0));
+        r.put("book", map("专著", book, 0));
+        r.put("award", map("获奖", award, 0));
+        r.put("competition", map("竞赛", comp, 0));
+        r.put("course", map("课程", course, 0));
+
+        LambdaQueryWrapper<AnnualTarget> q = new LambdaQueryWrapper<>();
+        q.eq(AnnualTarget::getCollegeId, collegeId).eq(AnnualTarget::getYear, year);
+        AnnualTarget t = annualTargetService.getOne(q);
+        if (t != null) {
+            setTarget(r, "project", t.getProjectTarget());
+            setTarget(r, "paper", t.getPaperTarget());
+            setTarget(r, "patent", t.getPatentTarget());
+            setTarget(r, "software", t.getSoftTarget());
+            setTarget(r, "book", t.getBookTarget());
+            setTarget(r, "award", t.getAwardTarget());
+            setTarget(r, "competition", t.getCompetitionTarget());
+            setTarget(r, "course", t.getCourseTarget());
+        }
+
+        return Result.success(r);
+    }
+
+    // 决策支持：研究方向关键词分析
+    @GetMapping("/analysis/keywords/{collegeId}")
+    public Result<Map<String, Object>> keywordAnalysis(@PathVariable Long collegeId) {
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, collegeId).eq(User::getRoleKey, "TEACHER"));
+        List<Long> ids = teachers.stream().map(User::getId).toList();
+
+        Map<String, Integer> keywords = new LinkedHashMap<>();
+        gatherKeywords(keywords, projectService, ids);
+        gatherKeywords(keywords, paperService, ids);
+
+        List<Map<String, Object>> sorted = keywords.entrySet().stream()
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(20)
+                .map(e -> { Map<String, Object> m = new HashMap<>(); m.put("name", e.getKey()); m.put("value", e.getValue()); return m; })
+                .toList();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("keywords", sorted);
+        result.put("teacherCount", teachers.size());
+        return Result.success(result);
+    }
+
+    // 决策支持：人才梯队分析
+    @GetMapping("/analysis/talent/{collegeId}")
+    public Result<List<Map<String, Object>>> talentAnalysis(@PathVariable Long collegeId) {
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, collegeId).eq(User::getRoleKey, "TEACHER"));
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (User t : teachers) {
+            int total = (int) (count(projectService, t.getId()) + count(paperService, t.getId())
+                    + count(patentService, t.getId()) + count(softService, t.getId())
+                    + count(bookService, t.getId()) + count(awardService, t.getId())
+                    + count(competitionService, t.getId()) + count(courseService, t.getId()));
+            Map<String, Object> m = new HashMap<>();
+            m.put("name", t.getRealName());
+            m.put("total", total);
+            String level = total >= 10 ? "骨干" : total >= 5 ? "中坚" : total > 0 ? "新锐" : "待激活";
+            m.put("level", level);
+            list.add(m);
+        }
+        list.sort((a, b) -> ((Integer) b.get("total")).compareTo((Integer) a.get("total")));
+        return Result.success(list);
+    }
+
+    private int countAll(com.baomidou.mybatisplus.extension.service.IService<?> s, List<Long> ids) {
+        if (ids.isEmpty()) return 0;
+        LambdaQueryWrapper<?> q = new LambdaQueryWrapper<>();
+        q.in("user_id", ids).eq("status", 3);
+        return (int) s.count(q);
+    }
+
+    private long count(com.baomidou.mybatisplus.extension.service.IService<?> s, Long uid) {
+        LambdaQueryWrapper<?> q = new LambdaQueryWrapper<>();
+        q.eq("user_id", uid).eq("status", 3);
+        return s.count(q);
+    }
+
+    private Map<String, Object> map(String name, int actual, int target) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("name", name);
+        m.put("actual", actual);
+        m.put("target", target);
+        m.put("percent", target > 0 ? Math.min(100, actual * 100 / target) : 100);
+        return m;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setTarget(Map<String, Object> r, String key, Integer val) {
+        if (val != null) ((Map<String, Object>) r.get(key)).put("target", val);
+        Map<String, Object> m = (Map<String, Object>) r.get(key);
+        int actual = (int) m.get("actual");
+        int target = (int) m.get("target");
+        m.put("percent", target > 0 ? Math.min(100, actual * 100 / target) : 100);
+    }
+
+    private Integer getInt(Map<String, Object> p, String k) {
+        Object v = p.get(k);
+        return v != null ? Integer.valueOf(v.toString()) : 0;
+    }
+
+    private void gatherKeywords(Map<String, Integer> map, com.baomidou.mybatisplus.extension.service.IService<?> s, List<Long> ids) {
+        if (ids.isEmpty()) return;
+        LambdaQueryWrapper<?> q = new LambdaQueryWrapper<>();
+        q.in("user_id", ids).eq("status", 3);
+        for (Object obj : s.list(q)) {
+            try {
+                String name = (String) obj.getClass().getMethod("getName").invoke(obj);
+                if (name == null) name = (String) obj.getClass().getMethod("getTitle").invoke(obj);
+                if (name != null && name.length() >= 2) {
+                    for (int i = 0; i <= name.length() - 2; i++) {
+                        String kw = name.substring(i, i + 2);
+                        map.merge(kw, 1, Integer::sum);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+}

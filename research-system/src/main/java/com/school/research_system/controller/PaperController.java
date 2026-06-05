@@ -46,6 +46,22 @@ public class PaperController {
         return Result.success("删除成功");
     }
 
+    // 撤回提交（将待秘书审核状态恢复为草稿）
+    @PutMapping("/withdraw/{id}")
+    public Result<String> withdraw(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        Paper paper = paperService.getById(id);
+        if (paper == null) return Result.error("记录不存在");
+        if (!paper.getUserId().equals(user.getId())) return Result.error("无权操作");
+        if (paper.getStatus() != 1) return Result.error("只有待秘书审核状态才能撤回");
+
+        paper.setStatus(0);
+        paperService.updateById(paper);
+        return Result.success("撤回成功");
+    }
+
     // 我的论文列表
     @GetMapping("/my-list")
     public Result<List<Paper>> myList() {
