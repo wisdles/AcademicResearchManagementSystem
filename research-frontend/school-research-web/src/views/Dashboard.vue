@@ -1,6 +1,19 @@
 <template>
   <div class="dashboard-container">
-    
+    <!-- 欢迎横幅 -->
+    <div class="welcome-banner">
+      <div class="banner-left">
+        <h2>{{ greeting }}，{{ realName }} 👋</h2>
+        <p>{{ today }} · 祝您工作顺利，科研有成</p>
+      </div>
+      <div class="banner-right">
+        <div class="quick-stat">
+          <div class="stat-num">{{ noticeList.length }}</div>
+          <div class="stat-label">通知公告</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. 顶部动态通知条 -->
     <div class="notice-bar" v-if="latestNotice">
       <div class="notice-icon">
@@ -150,9 +163,25 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { BellFilled, DataBoard, Calendar, Paperclip, View, Plus } from '@element-plus/icons-vue'
 
 const role = localStorage.getItem('role')
+const realName = localStorage.getItem('realName') || '用户'
 const isSecretary = computed(() => role && role.startsWith('SEC_'))
 const currentDate = ref(new Date())
-const currentUserId = Number(localStorage.getItem('userId') || 0) 
+const currentUserId = Number(localStorage.getItem('userId') || 0)
+
+const today = computed(() => {
+  const d = new Date()
+  const weeks = ['周日','周一','周二','周三','周四','周五','周六']
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weeks[d.getDay()]}`
+})
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 6) return '凌晨好'
+  if (h < 9) return '早上好'
+  if (h < 12) return '上午好'
+  if (h < 14) return '中午好'
+  if (h < 18) return '下午好'
+  return '晚上好'
+})
 
 const headers = computed(() => {
   return { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -309,7 +338,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard-container { padding: 0 10px; }
+.dashboard-container { padding: 0; }
+
+/* 欢迎横幅 */
+.welcome-banner {
+  background: linear-gradient(135deg, #5B8DEF 0%, #6C5CE7 100%);
+  border-radius: 14px;
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(91,141,239,0.2);
+}
+.banner-left h2 { font-size: 22px; margin: 0 0 6px 0; font-weight: 600; }
+.banner-left p { margin: 0; opacity: 0.85; font-size: 13px; }
+.banner-right {
+  display: flex;
+  gap: 24px;
+}
+.quick-stat { text-align: center; }
+.quick-stat .stat-num { font-size: 28px; font-weight: 700; }
+.quick-stat .stat-label { font-size: 12px; opacity: 0.85; margin-top: 2px; }
 
 /* 1. 顶部滚动通知条 */
 .notice-bar {

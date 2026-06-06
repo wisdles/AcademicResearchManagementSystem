@@ -5,6 +5,7 @@ import router from './router'
 // 1. 引入 Element Plus
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import './assets/theme.css'
 // 引入图标
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
