@@ -137,36 +137,97 @@ public class NoticeController {
     }
 
     // 6. 催报功能：秘书向本院教师发送催报消息
+    //    支持三种模式：
+    //    1) targetType=ALL  本院全部教师
+    //    2) targetType=COLLEGE + collegeIds  指定学院（管理员/院长用）
+    //    3) targetType=USERS + userIds  指定教师（精准催报）
     @PostMapping("/urge")
-    public Result<String> urge(@RequestBody Map<String, String> params) {
+    @SuppressWarnings("unchecked")
+    public Result<String> urge(@RequestBody Map<String, Object> params) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User operator = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
 
-        if (operator.getRoleKey() == null || !operator.getRoleKey().startsWith("SEC_")) {
-            return Result.error("只有秘书可以催报");
+        if (operator.getRoleKey() == null
+                || (!operator.getRoleKey().startsWith("SEC_")
+                    && !"DEAN".equals(operator.getRoleKey())
+                    && !"ADMIN".equals(operator.getRoleKey()))) {
+            return Result.error("您无权发送催报通知");
         }
 
-        String achievementType = params.get("achievementType"); // 成果类型，如project, paper等
-        String typeLabel = params.get("typeLabel"); // 中文名称，如"项目"
+        String achievementType = (String) params.get("achievementType");
+        String typeLabel = (String) params.getOrDefault("typeLabel", "成果");
+        String customContent = (String) params.get("content");          // 可选：自定义催报内容
+        String customTitle = (String) params.getOrDefault("title", "催报通知");
+        String targetType = (String) params.getOrDefault("targetType", "ALL");
 
-        // 查询本院所有教师
-        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
-                .eq(User::getCollegeId, operator.getCollegeId())
-                .eq(User::getRoleKey, "TEACHER"));
+        // 构造目标教师列表
+        LambdaQueryWrapper<User> q = new LambdaQueryWrapper<>();
+        q.eq(User::getRoleKey, "TEACHER");
+
+        if ("USERS".equalsIgnoreCase(targetType)) {
+            List<Object> rawIds = (List<Object>) params.get("userIds");
+            if (rawIds == null || rawIds.isEmpty()) return Result.error("请选择要催报的教师");
+            List<Long> userIds = rawIds.stream().map(o -> Long.valueOf(o.toString())).toList();
+            q.in(User::getId, userIds);
+        } else if ("COLLEGE".equalsIgnoreCase(targetType)) {
+            List<Object> rawIds = (List<Object>) params.get("collegeIds");
+            if (rawIds == null || rawIds.isEmpty()) return Result.error("请选择目标学院");
+            List<Long> cIds = rawIds.stream().map(o -> Long.valueOf(o.toString())).toList();
+            q.in(User::getCollegeId, cIds);
+        } else {
+            // ALL：默认本院教师（秘书/院长）；管理员若选 ALL 则全校
+            if (!"ADMIN".equals(operator.getRoleKey())) {
+                q.eq(User::getCollegeId, operator.getCollegeId());
+            }
+        }
+
+        List<User> teachers = userService.list(q);
+        if (teachers.isEmpty()) return Result.error("未匹配到任何教师");
+
+        String content = (customContent != null && !customContent.trim().isEmpty())
+                ? customContent
+                : "请您尽快提交" + typeLabel + "成果，谢谢配合！";
 
         int count = 0;
         for (User teacher : teachers) {
             Message msg = new Message();
             msg.setSenderId(operator.getId());
             msg.setReceiverId(teacher.getId());
-            msg.setTitle("催报通知");
-            msg.setContent("请您尽快提交" + typeLabel + "成果，谢谢配合！");
+            msg.setTitle(customTitle);
+            msg.setContent(content);
             msg.setType("URGE");
+            if (achievementType != null) {
+                msg.setRelatedType(achievementType.toUpperCase());
+            }
             messageMapper.insert(msg);
             count++;
         }
 
-        return Result.success("已成功向" + count + "位教师发送催报通知");
+        return Result.success("已成功向 " + count + " 位教师发送催报通知");
+    }
+
+    // 7. 获取可催报的教师列表（按角色权限过滤）
+    @GetMapping("/urge/candidates")
+    public Result<List<java.util.Map<String, Object>>> getUrgeCandidates() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User operator = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+
+        LambdaQueryWrapper<User> q = new LambdaQueryWrapper<>();
+        q.eq(User::getRoleKey, "TEACHER");
+        if (!"ADMIN".equals(operator.getRoleKey())) {
+            q.eq(User::getCollegeId, operator.getCollegeId());
+        }
+        List<User> teachers = userService.list(q);
+        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        for (User t : teachers) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", t.getId());
+            m.put("realName", t.getRealName());
+            m.put("username", t.getUsername());
+            m.put("collegeId", t.getCollegeId());
+            list.add(m);
+        }
+        return Result.success(list);
     }
 
 }
