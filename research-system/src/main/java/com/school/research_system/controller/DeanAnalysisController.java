@@ -189,6 +189,59 @@ public class DeanAnalysisController {
         return Result.success(anomalies);
     }
 
+    // === 资源分配建议 ===
+    @GetMapping("/analysis/resource/{collegeId}")
+    public Result<List<Map<String, Object>>> resourceSuggestion(@PathVariable Long collegeId) {
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, collegeId).eq(User::getRoleKey, "TEACHER"));
+        List<Long> ids = teachers.stream().map(User::getId).toList();
+
+        // 按各成果类型统计本院的成果分布，给出投入建议
+        int proj = countProj(ids), paper = countPaper(ids), patent = countPatent(ids);
+        int soft = countSoft(ids), book = countBook(ids), award = countAward(ids);
+
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        int total = proj + paper + patent + soft + book + award;
+        if (total == 0) return Result.success(suggestions);
+
+        // 短板分析
+        Map<String, Integer> typeMap = new LinkedHashMap<>();
+        typeMap.put("项目", proj); typeMap.put("论文", paper); typeMap.put("专利", patent);
+        typeMap.put("软著", soft); typeMap.put("专著", book); typeMap.put("获奖", award);
+
+        // 找出占比最低的两项作为重点支持方向
+        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(typeMap.entrySet());
+        sorted.sort((a, b) -> a.getValue().compareTo(b.getValue()));
+
+        for (int i = 0; i < Math.min(3, sorted.size()); i++) {
+            Map.Entry<String, Integer> e = sorted.get(i);
+            int percent = e.getValue() * 100 / Math.max(total, 1);
+            Map<String, Object> s = new HashMap<>();
+            s.put("category", e.getKey());
+            s.put("current", e.getValue());
+            s.put("percent", percent);
+            String level = percent < 5 ? "高优先级" : percent < 15 ? "中优先级" : "低优先级";
+            s.put("priority", level);
+            s.put("suggestion", String.format("本院 %s 类成果仅占 %d%%，建议加大该方向资源投入与人才培养", e.getKey(), percent));
+            suggestions.add(s);
+        }
+
+        // 教师数 vs 人均产出
+        if (!teachers.isEmpty()) {
+            double avg = (double) total / teachers.size();
+            Map<String, Object> s = new HashMap<>();
+            s.put("category", "整体产出");
+            s.put("current", total);
+            s.put("percent", (int) (avg * 10));
+            s.put("priority", avg < 2 ? "高优先级" : avg < 5 ? "中优先级" : "低优先级");
+            s.put("suggestion", String.format("本院共 %d 位教师，人均成果 %.1f 项%s",
+                    teachers.size(), avg, avg < 2 ? "，建议加强科研氛围与激励" : ""));
+            suggestions.add(s);
+        }
+
+        return Result.success(suggestions);
+    }
+
     @GetMapping("/analysis/talent/{collegeId}")
     public Result<List<Map<String, Object>>> talentAnalysis(@PathVariable Long collegeId) {
         List<User> teachers = userService.list(new LambdaQueryWrapper<User>()

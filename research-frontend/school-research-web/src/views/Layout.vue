@@ -157,6 +157,9 @@
               <el-icon><School /></el-icon> <!-- 需要引入 School 图标 -->
               <span>学院管理</span>
             </el-menu-item>
+            <el-menu-item index="/admin/score-rules">
+              <el-icon><Stamp /></el-icon> <span>评分规则</span>
+            </el-menu-item>
         </template>
 
       </el-menu>
@@ -194,6 +197,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                <el-dropdown-item command="preference">消息偏好</el-dropdown-item>
                 <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -220,6 +224,8 @@ const handleCommand = (command) => {
     router.push('/login')
   } else if (command === 'profile') {
     router.push('/profile')
+  } else if (command === 'preference') {
+    router.push('/preference')
   }
 }
 const router = useRouter()

@@ -44,6 +44,26 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 资源分配建议 -->
+    <el-card shadow="never" style="margin-top: 20px" v-if="resources.length > 0">
+      <template #header>资源分配建议</template>
+      <el-table :data="resources" border stripe>
+        <el-table-column prop="category" label="方向/维度" width="120" />
+        <el-table-column label="优先级" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.priority === '高优先级' ? 'danger' : row.priority === '中优先级' ? 'warning' : 'success'">
+              {{ row.priority }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="current" label="当前数" width="100" />
+        <el-table-column prop="percent" label="占比/指数" width="120">
+          <template #default="{ row }">{{ row.percent }}%</template>
+        </el-table-column>
+        <el-table-column prop="suggestion" label="建议" />
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -55,16 +75,18 @@ import request from '@/utils/request'
 const keywordChartRef = ref(null)
 const talentList = ref([])
 const anomalies = ref([])
+const resources = ref([])
 const loaded = ref(false)
 const noKeywords = ref(false)
 const collegeId = ref(Number(localStorage.getItem('collegeId')) || 1)
 
 const loadData = async () => {
   try {
-    const [kwRes, talentRes, anomalyRes] = await Promise.all([
+    const [kwRes, talentRes, anomalyRes, resRes] = await Promise.all([
       request.get(`/dean/analysis/keywords/${collegeId.value}`),
       request.get(`/dean/analysis/talent/${collegeId.value}`),
-      request.get(`/dean/analysis/anomaly/${collegeId.value}`)
+      request.get(`/dean/analysis/anomaly/${collegeId.value}`),
+      request.get(`/dean/analysis/resource/${collegeId.value}`)
     ])
     if (kwRes.code === 200 && kwRes.data) {
       const kws = kwRes.data.keywords || []
@@ -73,6 +95,7 @@ const loadData = async () => {
     }
     if (talentRes.code === 200) talentList.value = talentRes.data || []
     if (anomalyRes.code === 200) anomalies.value = anomalyRes.data || []
+    if (resRes.code === 200) resources.value = resRes.data || []
   } catch (e) { console.error(e) }
   finally { loaded.value = true }
 }

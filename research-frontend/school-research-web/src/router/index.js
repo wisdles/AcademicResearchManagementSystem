@@ -25,6 +25,16 @@ const router = createRouter({
           meta: { title: '个人中心' }
         },
         {
+          path: 'preference',
+          component: () => import('@/views/personal/MessagePreference.vue'),
+          meta: { title: '消息偏好' }
+        },
+        {
+          path: 'admin/score-rules',
+          component: () => import('@/views/admin/ScoreRuleConfig.vue'),
+          meta: { title: '评分规则' }
+        },
+        {
           path: 'achievement',
           component: () => import('../views/teacher/AchievementCenter.vue'),
           meta: { title: '成果管理' }
