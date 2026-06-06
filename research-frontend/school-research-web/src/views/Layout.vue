@@ -62,6 +62,9 @@
           <el-menu-item index="/teacher/profile">
             <el-icon><User /></el-icon> <span>学术主页</span>
           </el-menu-item>
+          <el-menu-item index="/teacher/application">
+            <el-icon><DocumentAdd /></el-icon> <span>项目申报</span>
+          </el-menu-item>
         </template>
         <!-- 秘书菜单 -->
         <template v-if="role.startsWith('SEC_')">

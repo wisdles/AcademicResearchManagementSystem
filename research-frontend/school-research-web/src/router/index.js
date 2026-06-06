@@ -50,6 +50,11 @@ const router = createRouter({
           meta: { title: '学术主页' }
         },
         {
+          path: 'teacher/application',
+          component: () => import('@/views/teacher/ApplicationCenter.vue'),
+          meta: { title: '项目申报' }
+        },
+        {
           path: 'messages',
           component: () => import('../views/MessageCenter.vue'),
           meta: { title: '消息中心' }
