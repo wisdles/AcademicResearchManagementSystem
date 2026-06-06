@@ -109,6 +109,86 @@ public class DeanAnalysisController {
         return Result.success(result);
     }
 
+    // === 异常数据预警 ===
+    @GetMapping("/analysis/anomaly/{collegeId}")
+    public Result<List<Map<String, Object>>> anomalyDetection(@PathVariable Long collegeId) {
+        List<User> teachers = userService.list(new LambdaQueryWrapper<User>()
+                .eq(User::getCollegeId, collegeId).eq(User::getRoleKey, "TEACHER"));
+        List<Long> ids = teachers.stream().map(User::getId).toList();
+        List<Map<String, Object>> anomalies = new ArrayList<>();
+
+        if (ids.isEmpty()) return Result.success(anomalies);
+
+        // 1. 检测论文标题重复
+        Map<String, List<Paper>> paperGroups = new HashMap<>();
+        for (Paper p : paperService.list(new LambdaQueryWrapper<Paper>().in(Paper::getUserId, ids))) {
+            if (p.getTitle() != null) paperGroups.computeIfAbsent(p.getTitle().trim(), k -> new ArrayList<>()).add(p);
+        }
+        paperGroups.forEach((title, list) -> {
+            if (list.size() > 1) {
+                Map<String, Object> a = new HashMap<>();
+                a.put("type", "论文重复");
+                a.put("name", title);
+                a.put("count", list.size());
+                a.put("level", "warning");
+                a.put("desc", "存在 " + list.size() + " 条同名论文记录，请核实是否重复申报");
+                anomalies.add(a);
+            }
+        });
+
+        // 2. 检测项目名称重复
+        Map<String, List<Project>> projGroups = new HashMap<>();
+        for (Project p : projectService.list(new LambdaQueryWrapper<Project>().in(Project::getUserId, ids))) {
+            if (p.getName() != null) projGroups.computeIfAbsent(p.getName().trim(), k -> new ArrayList<>()).add(p);
+        }
+        projGroups.forEach((name, list) -> {
+            if (list.size() > 1) {
+                Map<String, Object> a = new HashMap<>();
+                a.put("type", "项目重复");
+                a.put("name", name);
+                a.put("count", list.size());
+                a.put("level", "warning");
+                a.put("desc", "存在 " + list.size() + " 条同名项目记录");
+                anomalies.add(a);
+            }
+        });
+
+        // 3. 检测专利号重复
+        Map<String, List<Patent>> ptGroups = new HashMap<>();
+        for (Patent p : patentService.list(new LambdaQueryWrapper<Patent>().in(Patent::getUserId, ids))) {
+            if (p.getPatentNo() != null && !p.getPatentNo().isEmpty())
+                ptGroups.computeIfAbsent(p.getPatentNo().trim(), k -> new ArrayList<>()).add(p);
+        }
+        ptGroups.forEach((no, list) -> {
+            if (list.size() > 1) {
+                Map<String, Object> a = new HashMap<>();
+                a.put("type", "专利号重复");
+                a.put("name", no);
+                a.put("count", list.size());
+                a.put("level", "danger");
+                a.put("desc", "专利号 " + no + " 被申报 " + list.size() + " 次");
+                anomalies.add(a);
+            }
+        });
+
+        // 4. 检测长期挂起审核 (>30天还在待审核)
+        long threshold = System.currentTimeMillis() - 30L * 24 * 3600 * 1000;
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(threshold), java.time.ZoneId.systemDefault());
+        long pendingLong = paperService.count(new LambdaQueryWrapper<Paper>().in(Paper::getUserId, ids).in(Paper::getStatus, 1, 2).lt(Paper::getCreateTime, cutoff))
+                + projectService.count(new LambdaQueryWrapper<Project>().in(Project::getUserId, ids).in(Project::getStatus, 1, 2).lt(Project::getCreateTime, cutoff));
+        if (pendingLong > 0) {
+            Map<String, Object> a = new HashMap<>();
+            a.put("type", "审核超时");
+            a.put("name", "超过30天未审核");
+            a.put("count", (int) pendingLong);
+            a.put("level", "warning");
+            a.put("desc", "本院有 " + pendingLong + " 条成果提交超过30天仍未审核完成");
+            anomalies.add(a);
+        }
+
+        return Result.success(anomalies);
+    }
+
     @GetMapping("/analysis/talent/{collegeId}")
     public Result<List<Map<String, Object>>> talentAnalysis(@PathVariable Long collegeId) {
         List<User> teachers = userService.list(new LambdaQueryWrapper<User>()

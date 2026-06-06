@@ -45,7 +45,7 @@ import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 
 const years = [2025, 2026, 2027]
-const collegeId = ref(1) // 从localStorage获取
+const collegeId = ref(Number(localStorage.getItem('collegeId')) || 1)
 const fields = [
   { key: 'projectTarget', label: '项目目标' },
   { key: 'paperTarget', label: '论文目标' },

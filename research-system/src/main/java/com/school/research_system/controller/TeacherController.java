@@ -88,4 +88,25 @@ public class TeacherController {
 
         return Result.success(list);
     }
+
+    // 项目申报时自动引用已有成果
+    @GetMapping("/my-achievements")
+    public Result<Map<String, Object>> myAchievements() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        Long uid = user.getId();
+
+        Map<String, Object> r = new HashMap<>();
+        r.put("papers", paperService.list(new LambdaQueryWrapper<Paper>().eq(Paper::getUserId, uid).eq(Paper::getStatus, 3))
+                .stream().map(p -> { Map<String,String> m=new HashMap<>(); m.put("id",String.valueOf(p.getId())); m.put("title",p.getTitle()); m.put("journal",p.getJournalName()); return m; }).toList());
+        r.put("projects", projectService.list(new LambdaQueryWrapper<Project>().eq(Project::getUserId, uid).eq(Project::getStatus, 3))
+                .stream().map(p -> { Map<String,String> m=new HashMap<>(); m.put("id",String.valueOf(p.getId())); m.put("name",p.getName()); return m; }).toList());
+        r.put("patents", patentService.list(new LambdaQueryWrapper<Patent>().eq(Patent::getUserId, uid).eq(Patent::getStatus, 3))
+                .stream().map(p -> { Map<String,String> m=new HashMap<>(); m.put("id",String.valueOf(p.getId())); m.put("name",p.getName()); m.put("no",p.getPatentNo()); return m; }).toList());
+        r.put("totalPaper", (int) paperService.count(new LambdaQueryWrapper<Paper>().eq(Paper::getUserId, uid).eq(Paper::getStatus, 3)));
+        r.put("totalPatent", (int) patentService.count(new LambdaQueryWrapper<Patent>().eq(Patent::getUserId, uid).eq(Patent::getStatus, 3)));
+        r.put("totalProject", (int) projectService.count(new LambdaQueryWrapper<Project>().eq(Project::getUserId, uid).eq(Project::getStatus, 3)));
+
+        return Result.success(r);
+    }
 }

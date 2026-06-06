@@ -51,6 +51,7 @@ public class AuthController {
             map.put("realName", user.getRealName());
             map.put("isFirstLogin", user.getIsFirstLogin());
             map.put("userId", user.getId());
+            map.put("collegeId", user.getCollegeId());
             return Result.success(map);
 
         } catch (Exception e) {

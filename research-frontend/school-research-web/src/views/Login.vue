@@ -48,13 +48,14 @@ const handleLogin = () => {
       loading.value = true
       request.post('/auth/login', form).then(res => {
         // 登录成功
-        const { token, role, realName, isFirstLogin,userId } = res.data
-        
+        const { token, role, realName, isFirstLogin, userId, collegeId } = res.data
+
         // 1. 存储信息
         localStorage.setItem('token', token)
         localStorage.setItem('role', role)
         localStorage.setItem('realName', realName)
-        localStorage.setItem('userId',userId) // 存储 userId
+        localStorage.setItem('userId', userId)
+        localStorage.setItem('collegeId', collegeId || '')
         ElMessage.success(`欢迎回来，${realName}`)
 
         // 2. 如果是首次登录，跳转改密 (这里先不处理，直接跳主页)
