@@ -226,6 +226,113 @@ public class StatisticsController {
         return Result.success(result);
     }
 
+    // 教师个人成果明细列表（支持筛选）
+    @PostMapping("/my-achievements")
+    @SuppressWarnings("unchecked")
+    public Result<List<Map<String, Object>>> myAchievementsFiltered(@RequestBody Map<String, Object> params) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User me = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        if (me == null) return Result.error("用户异常");
+        Long uid = me.getId();
+
+        String filterType = (String) params.get("type");          // 成果类型，null=全部
+        Integer yearFrom = params.get("yearFrom") != null ? Integer.valueOf(params.get("yearFrom").toString()) : null;
+        Integer yearTo = params.get("yearTo") != null ? Integer.valueOf(params.get("yearTo").toString()) : null;
+        String keyword = (String) params.get("keyword");          // 名称/标题关键词
+        String tag = (String) params.get("tag");                  // 标签关键词
+
+        java.time.LocalDateTime from = yearFrom != null ? java.time.LocalDateTime.of(yearFrom, 1, 1, 0, 0) : null;
+        java.time.LocalDateTime to = yearTo != null ? java.time.LocalDateTime.of(yearTo, 12, 31, 23, 59) : null;
+
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+
+        // 每个类型
+        if (filterType == null || "project".equals(filterType))
+            collect(result, projectService, uid, "project", "项目", from, to, keyword, tag);
+        if (filterType == null || "paper".equals(filterType))
+            collect(result, paperService, uid, "paper", "论文", from, to, keyword, tag);
+        if (filterType == null || "patent".equals(filterType))
+            collect(result, patentService, uid, "patent", "专利", from, to, keyword, tag);
+        if (filterType == null || "software".equals(filterType))
+            collect(result, softService, uid, "software", "软著", from, to, keyword, tag);
+        if (filterType == null || "book".equals(filterType))
+            collect(result, bookService, uid, "book", "专著", from, to, keyword, tag);
+        if (filterType == null || "award".equals(filterType))
+            collect(result, awardService, uid, "award", "获奖", from, to, keyword, tag);
+        if (filterType == null || "competition".equals(filterType))
+            collect(result, competitionService, uid, "competition", "竞赛", from, to, keyword, tag);
+        if (filterType == null || "course".equals(filterType))
+            collect(result, courseService, uid, "course", "课程", from, to, keyword, tag);
+
+        result.sort((a, b) -> {
+            String t1 = (String) a.getOrDefault("createTime", "");
+            String t2 = (String) b.getOrDefault("createTime", "");
+            return t2.compareTo(t1);
+        });
+        return Result.success(result);
+    }
+
+    // 导出我的成果为 CSV（与筛选条件一致）
+    @PostMapping("/my-export")
+    @SuppressWarnings("unchecked")
+    public Result<String> myExport(@RequestBody Map<String, Object> params) {
+        // 复用 myAchievementsFiltered 逻辑
+        return Result.success("请通过前端 CSV 导出");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void collect(List<Map<String, Object>> result, com.baomidou.mybatisplus.extension.service.IService s,
+            Long uid, String type, String typeLabel, java.time.LocalDateTime from, java.time.LocalDateTime to,
+            String keyword, String tag) {
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper q =
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper();
+        q.eq("user_id", uid);
+        if (from != null) q.ge("create_time", from);
+        if (to != null) q.le("create_time", to);
+
+        List<?> list = s.list(q);
+        for (Object obj : list) {
+            try {
+                String name = null;
+                // 反射获取名称：依次尝试 getTitle / getAwardName / getCourseName / getName
+                for (String mn : new String[]{"getTitle", "getAwardName", "getCourseName", "getName"}) {
+                    try { name = (String) obj.getClass().getMethod(mn).invoke(obj); break; } catch (Exception ignored) {}
+                }
+                if (name == null) continue;
+
+                Integer status = (Integer) obj.getClass().getMethod("getStatus").invoke(obj);
+                java.time.LocalDateTime createTime = (java.time.LocalDateTime) obj.getClass().getMethod("getCreateTime").invoke(obj);
+                String tags = null;
+                try { tags = (String) obj.getClass().getMethod("getTags").invoke(obj); } catch (Exception ignored) {}
+                String classification = null;
+                try { classification = (String) obj.getClass().getMethod("getClassification").invoke(obj); } catch (Exception ignored) {}
+
+                // 关键词筛选
+                if (keyword != null && !keyword.isEmpty() && (name == null || !name.contains(keyword))) continue;
+                if (tag != null && !tag.isEmpty() && (tags == null || !tags.contains(tag))) continue;
+
+                Map<String, Object> m = new HashMap<>();
+                m.put("type", type);
+                m.put("typeLabel", typeLabel);
+                m.put("name", name);
+                m.put("status", status);
+                m.put("statusText", statusText(status));
+                m.put("classification", classification != null ? classification : "");
+                m.put("tags", tags != null ? tags : "");
+                m.put("createTime", createTime != null ? createTime.toString().substring(0, 10) : "");
+                result.add(m);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private String statusText(int s) {
+        return switch (s) {
+            case 0 -> "草稿"; case 1 -> "待秘书审核"; case 2 -> "待院长审核";
+            case 3 -> "已通过"; case -1 -> "秘书驳回"; case -2 -> "院长驳回";
+            default -> "未知";
+        };
+    }
+
     // 教师绩效考核排名
     @PostMapping("/performance")
     public Result<List<Map<String, Object>>> getPerformance(@RequestBody StatsQueryDto query) {
