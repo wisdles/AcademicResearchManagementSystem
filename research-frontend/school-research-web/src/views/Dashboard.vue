@@ -153,11 +153,27 @@
       </div>
     </el-dialog>
 
+    <!-- 新公告弹窗提醒（首次进入只弹一次） -->
+    <el-dialog v-model="newNoticeVisible" title="📢 新公告提醒" width="550px" :close-on-click-modal="false">
+      <div v-if="newNotice">
+        <h3 style="margin:0 0 12px 0;color:#303133">{{ newNotice.title }}</h3>
+        <div style="color:#606266;margin-bottom:12px">
+          <el-tag size="small" :type="getclassificationType(newNotice.classification)">{{ getclassificationText(newNotice.classification) }}</el-tag>
+          <span style="margin-left:10px;font-size:13px;color:#909399">{{ newNotice.publisherName }} · {{ formatDate(newNotice.createTime) }}</span>
+        </div>
+        <div style="line-height:1.8;color:#4B5563;max-height:200px;overflow-y:auto;white-space:pre-wrap">{{ newNotice.content?.substring(0, 500) }}{{ newNotice.content?.length > 500 ? '...' : '' }}</div>
+      </div>
+      <template #footer>
+        <el-button @click="newNoticeVisible = false">我知道了</el-button>
+        <el-button type="primary" @click="newNoticeVisible = false; viewDetail(newNotice)">查看详情</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { BellFilled, DataBoard, Calendar, Paperclip, View, Plus } from '@element-plus/icons-vue'
@@ -332,9 +348,24 @@ const previewAttachment = (id) => {
   })
 }
 
-onMounted(() => {
-  getList()
-})
+// 新公告弹窗提醒
+const newNoticeVisible = ref(false)
+const newNotice = ref(null)
+
+const checkNewNotice = () => {
+  if (!noticeList.value.length) return
+  const latest = noticeList.value[0]
+  if (!latest || !latest.id) return
+  const lastSeenId = Number(localStorage.getItem('lastSeenNoticeId') || 0)
+  if (latest.id > lastSeenId) {
+    newNotice.value = latest
+    newNoticeVisible.value = true
+    localStorage.setItem('lastSeenNoticeId', String(latest.id))
+  }
+}
+
+onMounted(() => { getList() })
+watch(noticeList, () => { if (noticeList.value.length > 0) checkNewNotice() })
 </script>
 
 <style scoped>
