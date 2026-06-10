@@ -1,0 +1,32 @@
+classDiagram
+    class NoticeController {
+        +urge(params) 发送催报
+        +getUrgeCandidates() 候选教师列表
+    }
+    class UserService {
+        +list(query) 查询教师
+    }
+    class MessageMapper {
+        +insert(msg) 插入消息
+    }
+    class Message {
+        +Long senderId
+        +Long receiverId
+        +String title
+        +String content
+        +String type
+        +String relatedType
+    }
+    class UrgeRequest {
+        +String targetType
+        +List userIds
+        +List collegeIds
+        +String achievementType
+        +String title
+        +String content
+    }
+    NoticeController --> UserService : 查询目标教师
+    NoticeController --> MessageMapper : 批量插入消息
+    MessageMapper --> Message : 创建
+    UrgeRequest --> NoticeController : 请求参数
+    Note for NoticeController "targetType: ALL/USERS/COLLEGE"

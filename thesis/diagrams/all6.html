@@ -1,0 +1,134 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'default',securityLevel:'loose'});</script>
+<style>
+body{font-family:'Microsoft YaHei',Arial;padding:20px;background:#fff;}
+.d{background:white;padding:30px 20px;margin:20px 0;border:1px solid #ddd;border-radius:6px;}
+.d h3{text-align:center;margin:0 0 15px 0;color:#333;font-size:16px;}
+</style></head><body>
+
+<div class="d"><h3>图4-1 系统E-R关系图</h3><div class="mermaid">
+erDiagram
+    COLLEGE ||--o{ USER : "1:N"
+    USER ||--o{ AUDIT_LOG : "1:N"
+    USER ||--o{ PROJECT : "1:N"
+    USER ||--o{ PAPER : "1:N"
+    USER ||--o{ PATENT : "1:N"
+    USER ||--o{ SOFTWARE : "1:N"
+    USER ||--o{ BOOK : "1:N"
+    USER ||--o{ AWARD : "1:N"
+    USER ||--o{ COMPETITION : "1:N"
+    USER ||--o{ COURSE : "1:N"
+    PROJECT ||--o{ ACHIEVE_SHARE : "1:N"
+    PAPER ||--o{ ACHIEVE_SHARE : "1:N"
+    USER ||--o{ MESSAGE : "1:N"
+    USER ||--o{ NOTICE : "1:N"
+    COLLEGE ||--o{ ANNUAL_TARGET : "1:N"
+    COLLEGE ||--o{ SCORE_RULE : "1:N"
+</div></div>
+
+<div class="d"><h3>图4-2 成果申报管理模块类图</h3><div class="mermaid">
+classDiagram
+    class User { +Long id +String username +String realName +String roleKey }
+    class Project { +Long id +Long userId +String name +String level +Integer status }
+    class Paper { +Long id +Long userId +String title +String journalName +Integer status }
+    class Patent { +Long id +Long userId +String name +String patentNo +Integer status }
+    class AuditLog { +Long id +Long targetId +String targetType +String action }
+    class Message { +Long id +Long receiverId +String title +String content }
+    class ProjectController { +add(dto) +myList() +auditList() +audit(dto) }
+    class PaperController { +add(dto) +myList() +auditList() +audit(dto) }
+    class IProjectService { +createProject() +updateProject() +auditProject() }
+    class IPaperService { +createPaper() +updatePaper() +auditPaper() }
+    ProjectController --> IProjectService
+    PaperController --> IPaperService
+    IProjectService --> Project
+    IProjectService --> AuditLog
+    IProjectService --> Message
+    IPaperService --> Paper
+    IPaperService --> AuditLog
+    IPaperService --> Message
+    Project --> User
+    Paper --> User
+</div></div>
+
+<div class="d"><h3>图4-3 论文审核操作时序图</h3><div class="mermaid">
+sequenceDiagram
+    actor T as 教师
+    participant F as 前端
+    participant C as Controller
+    participant S as Service
+    participant D as Database
+    participant M as Message
+
+    T->>F: 提交论文
+    F->>C: POST /paper/add
+    C->>S: createPaper()
+    S->>D: insert status=1
+    C-->>F: 返回成功
+
+    Note over T,M: === 秘书审核 ===
+    秘书->>F: 审核通过
+    F->>C: POST /paper/audit
+    C->>D: 查询论文
+    C->>S: auditPaper()
+    S->>D: update status=2
+    S->>D: insert audit_log
+    S->>M: insert message(审核结果)
+    M-->>T: 消息通知
+
+    Note over T,M: === 院长终审 ===
+    院长->>F: 终审通过
+    F->>C: POST /paper/audit
+    C->>D: 查询status=2
+    C->>S: auditPaper()
+    S->>D: update status=3
+    S->>D: insert audit_log
+    S->>M: insert message
+    M-->>T: 消息通知
+</div></div>
+
+<div class="d"><h3>图4-4 催报管理模块</h3><div class="mermaid">
+classDiagram
+    class NoticeController { +urge(params) +getCandidates() }
+    class IUserService { +list() }
+    class MessageMapper { +insert() }
+    class Message { +senderId +receiverId +title +content +type }
+    NoticeController --> IUserService : 查询
+    NoticeController --> MessageMapper : 批量插入
+    MessageMapper --> Message : 创建
+    note for NoticeController "3种模式: ALL/USERS/COLLEGE"
+</div></div>
+
+<div class="d"><h3>图4-5 绩效考核算法流程图</h3><div class="mermaid">
+flowchart TD
+    A[开始: 接收查询参数] --> B[查询教师列表]
+    B --> C{遍历每位教师}
+    C --> D[统计8类本人成果<br/>status=3]
+    D --> E[统计共享成果<br/>biz_achievement_share]
+    E --> F[去重: type+id唯一]
+    F --> G[计算得分:<br/>本人满分+共享半价]
+    G --> H[组装结果]
+    H --> I{还有教师?}
+    I -->|是| C
+    I -->|否| J[按score降序排列]
+    J --> K[赋排名rank]
+    K --> L[返回绩效排名]
+    style A fill:#409EFF,color:#fff
+    style L fill:#67C23A,color:#fff
+</div></div>
+
+<div class="d"><h3>图4-6 异常预警检测流程图</h3><div class="mermaid">
+flowchart TD
+    A[开始: 获取collegeId] --> B[查询本院教师ID]
+    B --> C[检测1: 论文标题重复<br/>GROUP BY title HAVING count>1]
+    C --> D[检测2: 项目名称重复<br/>GROUP BY name HAVING count>1]
+    D --> E[检测3: 专利号重复<br/>GROUP BY patent_no HAVING count>1]
+    E --> F[检测4: 审核超时30天<br/>status IN 1,2 AND create_time<30天前]
+    F --> G[汇总异常列表]
+    G --> H[设置级别: warning/danger]
+    H --> I[返回 anomalies List]
+    style A fill:#409EFF,color:#fff
+    style I fill:#F56C6C,color:#fff
+</div></div>
+
+</body></html>

@@ -1,0 +1,12 @@
+flowchart TD
+    A[开始: GET collegeId] --> B[获取本院教师ID列表]
+    B --> C{检测1: 论文标题重复}
+    C --> D[遍历 biz_paper 按title分组 count>1]
+    D --> E{检测2: 项目名称重复}
+    E --> F[遍历 biz_project 按name分组 count>1]
+    F --> G{检测3: 专利号重复}
+    G --> H[遍历 biz_patent 按patent_no分组 count>1]
+    H --> I{检测4: 审核超时}
+    I --> J[查询所有表 status IN 1,2 AND create_time < now-30天]
+    J --> K[汇总异常项列表]
+    K --> L[返回 anomalies List]

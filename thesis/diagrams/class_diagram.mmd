@@ -1,0 +1,72 @@
+classDiagram
+    class User {
+        +Long id
+        +String username
+        +String realName
+        +String roleKey
+    }
+    class Project {
+        +Long id
+        +Long userId
+        +String name
+        +String level
+        +Integer status
+    }
+    class Paper {
+        +Long id
+        +Long userId
+        +String title
+        +String journalName
+        +Integer status
+    }
+    class Patent {
+        +Long id
+        +Long userId
+        +String name
+        +String patentNo
+        +Integer status
+    }
+    class AuditLog {
+        +Long id
+        +Long targetId
+        +String targetType
+        +String action
+    }
+    class Message {
+        +Long id
+        +Long receiverId
+        +String title
+        +String content
+    }
+    class ProjectController {
+        +add(dto)
+        +myList()
+        +auditList()
+        +audit(dto)
+    }
+    class PaperController {
+        +add(dto) 
+        +myList()
+        +auditList()
+        +audit(dto)
+    }
+    class ProjectService {
+        +createProject()
+        +updateProject()
+        +auditProject()
+    }
+    class PaperService {
+        +createPaper()
+        +updatePaper()
+        +auditPaper()
+    }
+    ProjectController --> ProjectService
+    PaperController --> PaperService
+    ProjectService --> Project
+    ProjectService --> AuditLog
+    ProjectService --> Message
+    PaperService --> Paper
+    PaperService --> AuditLog
+    PaperService --> Message
+    Project --> User
+    Paper --> User

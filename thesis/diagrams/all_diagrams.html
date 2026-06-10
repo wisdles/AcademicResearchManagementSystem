@@ -1,0 +1,136 @@
+<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'default'});</script>
+<style>body{font-family:Arial;padding:20px;}
+.diagram{background:white;padding:20px;margin:20px 0;border:2px solid #333;page-break-after:always;}
+.diagram h3{text-align:center;margin:0 0 10px 0;color:#333;}
+</style></head><body>
+<div class="diagram"><h3>er</h3><div class="mermaid">
+erDiagram
+    COLLEGE ||--o{ USER : "1:N 所属"
+    USER ||--o{ AUDIT_LOG : "1:N 操作"
+    USER ||--o{ PROJECT : "1:N 申报"
+    USER ||--o{ PAPER : "1:N 申报"
+    USER ||--o{ PATENT : "1:N 申报"
+    USER ||--o{ SOFTWARE : "1:N 申报"
+    USER ||--o{ BOOK : "1:N 申报"
+    USER ||--o{ AWARD : "1:N 申报"
+    USER ||--o{ COMPETITION : "1:N 申报"
+    USER ||--o{ COURSE : "1:N 申报"
+    USER ||--o{ MESSAGE : "1:N 接收"
+    USER ||--o{ NOTICE : "1:N 发布"
+    PROJECT ||--o{ ACHIEVE_SHARE : "1:N 共享"
+    PAPER ||--o{ ACHIEVE_SHARE : "1:N 共享"
+    USER ||--o{ MSG_PREFERENCE : "1:1 偏好"
+    COLLEGE ||--o{ ANNUAL_TARGET : "1:N 目标"
+    COLLEGE ||--o{ SCORE_RULE : "1:N 规则"
+
+</div></div>
+<div class="diagram"><h3>class diagram</h3><div class="mermaid">
+classDiagram
+    class User {
+        +Long id
+        +String username
+        +String realName
+        +String roleKey
+    }
+    class Project {
+        +Long id
+        +Long userId
+        +String name
+        +String level
+        +Integer status
+    }
+    class Paper {
+        +Long id
+        +Long userId
+        +String title
+        +String journalName
+        +Integer status
+    }
+    class Patent {
+        +Long id
+        +Long userId
+        +String name
+        +String patentNo
+        +Integer status
+    }
+    class AuditLog {
+        +Long id
+        +Long targetId
+        +String targetType
+        +String action
+    }
+    class Message {
+        +Long id
+        +Long receiverId
+        +String title
+        +String content
+    }
+    class ProjectController {
+        +add(dto)
+        +myList()
+        +auditList()
+        +audit(dto)
+    }
+    class PaperController {
+        +add(dto) 
+        +myList()
+        +auditList()
+        +audit(dto)
+    }
+    class ProjectService {
+        +createProject()
+        +updateProject()
+        +auditProject()
+    }
+    class PaperService {
+        +createPaper()
+        +updatePaper()
+        +auditPaper()
+    }
+    ProjectController --> ProjectService
+    PaperController --> PaperService
+    ProjectService --> Project
+    ProjectService --> AuditLog
+    ProjectService --> Message
+    PaperService --> Paper
+    PaperService --> AuditLog
+    PaperService --> Message
+    Project --> User
+    Paper --> User
+
+</div></div>
+<div class="diagram"><h3>performance flow</h3><div class="mermaid">
+flowchart TD
+    A[开始: StatsQueryDto collegeId, year] --> B[查询教师列表 sys_user WHERE role_key=TEACHER]
+    B --> C{遍历每位教师}
+    C --> D[统计本人成果: 8类 biz_xxx WHERE user_id=uid AND status=3]
+    D --> E[统计共享成果: biz_achievement_share WHERE shared_user_id=uid]
+    E --> F[去重: 按 achievement_type+achievement_id 唯一]
+    F --> G[计算得分: 本人满分 + 共享半价]
+    G --> H[组装结果: rank, name, score, ownCount, sharedCount]
+    H --> I{还有教师?}
+    I -->|是| C
+    I -->|否| J[按score降序排列]
+    J --> K[赋排名 rank=1..N]
+    K --> L[返回 List 绩效排名]
+
+</div></div>
+<div class="diagram"><h3>anomaly flow</h3><div class="mermaid">
+flowchart TD
+    A[开始: GET collegeId] --> B[获取本院教师ID列表]
+    B --> C{检测1: 论文标题重复}
+    C --> D[遍历 biz_paper 按title分组 count>1]
+    D --> E{检测2: 项目名称重复}
+    E --> F[遍历 biz_project 按name分组 count>1]
+    F --> G{检测3: 专利号重复}
+    G --> H[遍历 biz_patent 按patent_no分组 count>1]
+    H --> I{检测4: 审核超时}
+    I --> J[查询所有表 status IN 1,2 AND create_time < now-30天]
+    J --> K[汇总异常项列表]
+    K --> L[返回 anomalies List]
+
+</div></div>
+</body></html>

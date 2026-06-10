@@ -1,0 +1,36 @@
+sequenceDiagram
+    actor 教师
+    participant 前端
+    participant PaperController
+    participant PaperService
+    participant AuditLogMapper
+    participant MessageMapper
+
+    教师->>前端: 提交论文
+    前端->>PaperController: POST /paper/add
+    PaperController->>PaperService: createPaper(dto)
+    PaperService->>PaperService: save(paper) status=1
+    PaperController-->>前端: 返回成功
+    前端-->>教师: 提交成功
+
+    Note over 教师,MessageMapper: === 秘书审核阶段 ===
+
+    秘书->>前端: 审核论文(通过)
+    前端->>PaperController: POST /paper/audit {pass:true}
+    PaperController->>PaperService: auditPaper(dto)
+    PaperService->>PaperService: updateById status=2
+    PaperService->>AuditLogMapper: insert(审核日志)
+    PaperService->>MessageMapper: insert(审核结果消息)
+    PaperController-->>前端: 审核完成
+
+    Note over 教师,MessageMapper: === 院长终审阶段 ===
+
+    院长->>前端: 终审论文(通过)
+    前端->>PaperController: POST /paper/audit {pass:true}
+    PaperController->>PaperService: auditPaper(dto)
+    PaperService->>PaperService: updateById status=3
+    PaperService->>AuditLogMapper: insert(审核日志)
+    PaperService->>MessageMapper: insert(审核结果消息)
+    PaperController-->>前端: 终审完成
+
+    MessageMapper-->>教师: 收到审核结果通知

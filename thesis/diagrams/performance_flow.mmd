@@ -1,0 +1,13 @@
+flowchart TD
+    A[开始: StatsQueryDto collegeId, year] --> B[查询教师列表 sys_user WHERE role_key=TEACHER]
+    B --> C{遍历每位教师}
+    C --> D[统计本人成果: 8类 biz_xxx WHERE user_id=uid AND status=3]
+    D --> E[统计共享成果: biz_achievement_share WHERE shared_user_id=uid]
+    E --> F[去重: 按 achievement_type+achievement_id 唯一]
+    F --> G[计算得分: 本人满分 + 共享半价]
+    G --> H[组装结果: rank, name, score, ownCount, sharedCount]
+    H --> I{还有教师?}
+    I -->|是| C
+    I -->|否| J[按score降序排列]
+    J --> K[赋排名 rank=1..N]
+    K --> L[返回 List 绩效排名]
