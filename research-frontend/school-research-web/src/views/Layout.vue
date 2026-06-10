@@ -131,11 +131,7 @@
       </el-header>
 
       <el-main class="main-content">
-        <router-view v-slot="{ Component }">
-          <transition name="fade-slide" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
-          </transition>
-        </router-view>
+        <router-view />
       </el-main>
     </el-container>
   </div>
