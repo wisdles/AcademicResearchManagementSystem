@@ -72,7 +72,7 @@
           <el-upload
             class="upload-area"
             drag
-            action="http://localhost:8080/file/upload"
+            action="/api/file/upload"
             name="file"
             :headers="uploadHeaders"
             :show-file-list="false"

@@ -102,7 +102,7 @@ const generateDoc = async () => {
   try {
     // 用 fetch 拿二进制文件
     const token = localStorage.getItem('token')
-    const resp = await fetch(`http://localhost:8080/application/template?projectName=${encodeURIComponent(form.projectName)}`, {
+    const resp = await fetch(`/api/application/template?projectName=${encodeURIComponent(form.projectName)}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (!resp.ok) {

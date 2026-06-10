@@ -103,7 +103,7 @@
         <el-form-item label="附件">
           <el-upload
             class="upload-demo"
-            action="http://localhost:8080/file/upload"
+            action="/api/file/upload"
             :headers="headers"
             :limit="1"
             :on-success="handleUploadSuccess"

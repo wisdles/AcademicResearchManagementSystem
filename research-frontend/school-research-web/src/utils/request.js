@@ -3,8 +3,9 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 
 // 创建 axios 实例
+// Vite proxy: /api/* → http://localhost:8080/*
 const request = axios.create({
-  baseURL: 'http://localhost:8080', // 后端地址
+  baseURL: '/api',
   timeout: 60000
 })
 
