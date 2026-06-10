@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/preference")
@@ -51,26 +52,55 @@ public class PreferencesController {
         return Result.success("保存成功");
     }
 
-    // === 评分规则（管理员） ===
-    @GetMapping("/rules")
-    public Result<List<ScoreRule>> getRules() { return Result.success(scoreRuleMapper.selectList(null)); }
+    // === 评分规则（管理员·按年管理） ===
 
+    // 获取可用年份列表
+    @GetMapping("/rules/years")
+    public Result<List<Integer>> getYears() {
+        List<ScoreRule> all = scoreRuleMapper.selectList(null);
+        java.util.Set<Integer> years = new java.util.HashSet<>();
+        for (ScoreRule r : all) years.add(r.getYear());
+        List<Integer> sorted = new java.util.ArrayList<>(years);
+        sorted.sort((a, b) -> b - a); // 降序
+        return Result.success(sorted);
+    }
+
+    // 查某一年
+    @GetMapping("/rules/{year}")
+    public Result<List<ScoreRule>> getRulesByYear(@PathVariable Integer year) {
+        return Result.success(scoreRuleMapper.selectList(
+                new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getYear, year)));
+    }
+
+    // 保存（某一年）
     @PostMapping("/rules/save")
-    public Result<String> saveRules(@RequestBody List<ScoreRule> rules) {
-        for (int i = 0; i < rules.size(); i++) {
-            ScoreRule r = rules.get(i);
+    public Result<String> saveRules(@RequestBody Map<String, Object> params) {
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> raw = (List<Map<String, Object>>) params.get("rules");
+        Integer year = Integer.valueOf(params.get("year").toString());
+        for (Map<String, Object> m : raw) {
+            ScoreRule r = new ScoreRule();
+            r.setId(m.get("id") != null ? Long.valueOf(m.get("id").toString()) : null);
+            r.setYear(year);
+            r.setRuleType((String) m.get("ruleType"));
+            r.setRuleKey((String) m.get("ruleKey"));
+            r.setRuleLabel((String) m.get("ruleLabel"));
+            r.setScore(Integer.valueOf(m.get("score").toString()));
+            r.setEnabled(Integer.valueOf(m.getOrDefault("enabled", "1").toString()));
             ScoreRule exist = scoreRuleMapper.selectOne(
-                    new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getRuleType, r.getRuleType()).eq(ScoreRule::getRuleKey, r.getRuleKey()));
+                    new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getYear, year)
+                            .eq(ScoreRule::getRuleType, r.getRuleType()).eq(ScoreRule::getRuleKey, r.getRuleKey()));
             if (exist != null) { r.setId(exist.getId()); scoreRuleMapper.updateById(r); }
             else scoreRuleMapper.insert(r);
         }
         return Result.success("保存成功");
     }
 
-    // 初始化默认评分规则
-    @PostMapping("/rules/init")
-    public Result<String> initRules() {
-        if (scoreRuleMapper.selectCount(null) > 0) return Result.success("已存在");
+    // 初始化某一年
+    @PostMapping("/rules/init/{year}")
+    public Result<String> initRules(@PathVariable Integer year) {
+        long cnt = scoreRuleMapper.selectCount(new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getYear, year));
+        if (cnt > 0) return Result.success(year + "年规则已存在，无需初始化");
         String[][] data = {
             {"project", "NATIONAL", "国家级项目", "5"}, {"project", "PROVINCIAL", "省部级项目", "3"}, {"project", "CITY", "市厅级项目", "2"}, {"project", "SCHOOL", "校级项目", "1"},
             {"paper", "SCI_Q1", "SCI一区", "5"}, {"paper", "SCI_Q2", "SCI二区", "4"}, {"paper", "SCI_Q3", "SCI三区", "3"}, {"paper", "SCI_Q4", "SCI四区", "2"},
@@ -84,9 +114,28 @@ public class PreferencesController {
         };
         for (String[] d : data) {
             ScoreRule r = new ScoreRule();
-            r.setRuleType(d[0]); r.setRuleKey(d[1]); r.setRuleLabel(d[2]); r.setScore(Integer.parseInt(d[3])); r.setEnabled(1);
+            r.setYear(year); r.setRuleType(d[0]); r.setRuleKey(d[1]); r.setRuleLabel(d[2]);
+            r.setScore(Integer.parseInt(d[3])); r.setEnabled(1);
             scoreRuleMapper.insert(r);
         }
-        return Result.success("初始化完成");
+        return Result.success(year + "年规则初始化完成");
+    }
+
+    // 复制上年规则
+    @PostMapping("/rules/copy/{fromYear}/{toYear}")
+    public Result<String> copyRules(@PathVariable Integer fromYear, @PathVariable Integer toYear) {
+        List<ScoreRule> src = scoreRuleMapper.selectList(
+                new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getYear, fromYear));
+        if (src.isEmpty()) return Result.error("源年份无规则");
+        // 清空目标年
+        scoreRuleMapper.delete(new LambdaQueryWrapper<ScoreRule>().eq(ScoreRule::getYear, toYear));
+        for (ScoreRule r : src) {
+            r.setId(null);
+            r.setYear(toYear);
+            r.setCreateTime(null);
+            r.setUpdateTime(null);
+            scoreRuleMapper.insert(r);
+        }
+        return Result.success("已从" + fromYear + "年复制到" + toYear + "年，共" + src.size() + "条");
     }
 }
