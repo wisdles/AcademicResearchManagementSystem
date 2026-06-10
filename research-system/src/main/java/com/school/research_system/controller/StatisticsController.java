@@ -235,6 +235,13 @@ public class StatisticsController {
             userQuery.eq(User::getCollegeId, query.getCollegeId());
         }
 
+        // 年份筛选：用 createTime 范围
+        java.time.LocalDateTime yearStart = null, yearEnd = null;
+        if (query.getYear() != null) {
+            yearStart = java.time.LocalDateTime.of(query.getYear(), 1, 1, 0, 0, 0);
+            yearEnd = java.time.LocalDateTime.of(query.getYear(), 12, 31, 23, 59, 59);
+        }
+
         List<User> users = userService.list(userQuery);
         List<Map<String, Object>> result = new ArrayList<>();
 
@@ -242,14 +249,32 @@ public class StatisticsController {
             Long uid = teacher.getId();
 
             // 自己的成果
-            long projCount = projectService.count(new LambdaQueryWrapper<Project>().eq(Project::getUserId, uid).eq(Project::getStatus, 3));
-            long paperCount = paperService.count(new LambdaQueryWrapper<Paper>().eq(Paper::getUserId, uid).eq(Paper::getStatus, 3));
-            long patentCount = patentService.count(new LambdaQueryWrapper<Patent>().eq(Patent::getUserId, uid).eq(Patent::getStatus, 3));
-            long softCount = softService.count(new LambdaQueryWrapper<SoftwareCopyright>().eq(SoftwareCopyright::getUserId, uid).eq(SoftwareCopyright::getStatus, 3));
-            long bookCount = bookService.count(new LambdaQueryWrapper<Book>().eq(Book::getUserId, uid).eq(Book::getStatus, 3));
-            long awardCount = awardService.count(new LambdaQueryWrapper<Award>().eq(Award::getUserId, uid).eq(Award::getStatus, 3));
-            long competitionCount = competitionService.count(new LambdaQueryWrapper<Competition>().eq(Competition::getUserId, uid).eq(Competition::getStatus, 3));
-            long courseCount = courseService.count(new LambdaQueryWrapper<Course>().eq(Course::getUserId, uid).eq(Course::getStatus, 3));
+            LambdaQueryWrapper<Project> projQ = new LambdaQueryWrapper<Project>().eq(Project::getUserId, uid).eq(Project::getStatus, 3);
+            LambdaQueryWrapper<Paper> paperQ = new LambdaQueryWrapper<Paper>().eq(Paper::getUserId, uid).eq(Paper::getStatus, 3);
+            LambdaQueryWrapper<Patent> patentQ = new LambdaQueryWrapper<Patent>().eq(Patent::getUserId, uid).eq(Patent::getStatus, 3);
+            LambdaQueryWrapper<SoftwareCopyright> softQ = new LambdaQueryWrapper<SoftwareCopyright>().eq(SoftwareCopyright::getUserId, uid).eq(SoftwareCopyright::getStatus, 3);
+            LambdaQueryWrapper<Book> bookQ = new LambdaQueryWrapper<Book>().eq(Book::getUserId, uid).eq(Book::getStatus, 3);
+            LambdaQueryWrapper<Award> awardQ = new LambdaQueryWrapper<Award>().eq(Award::getUserId, uid).eq(Award::getStatus, 3);
+            LambdaQueryWrapper<Competition> compQ = new LambdaQueryWrapper<Competition>().eq(Competition::getUserId, uid).eq(Competition::getStatus, 3);
+            LambdaQueryWrapper<Course> courseQ = new LambdaQueryWrapper<Course>().eq(Course::getUserId, uid).eq(Course::getStatus, 3);
+            if (yearStart != null) {
+                projQ.between(Project::getCreateTime, yearStart, yearEnd);
+                paperQ.between(Paper::getCreateTime, yearStart, yearEnd);
+                patentQ.between(Patent::getCreateTime, yearStart, yearEnd);
+                softQ.between(SoftwareCopyright::getCreateTime, yearStart, yearEnd);
+                bookQ.between(Book::getCreateTime, yearStart, yearEnd);
+                awardQ.between(Award::getCreateTime, yearStart, yearEnd);
+                compQ.between(Competition::getCreateTime, yearStart, yearEnd);
+                courseQ.between(Course::getCreateTime, yearStart, yearEnd);
+            }
+            long projCount = projectService.count(projQ);
+            long paperCount = paperService.count(paperQ);
+            long patentCount = patentService.count(patentQ);
+            long softCount = softService.count(softQ);
+            long bookCount = bookService.count(bookQ);
+            long awardCount = awardService.count(awardQ);
+            long competitionCount = competitionService.count(compQ);
+            long courseCount = courseService.count(courseQ);
 
             // 别人共享给我的成果（去重后的唯一成果数，50% 计入分数）
             List<AchievementShare> myShares = shareMapper.selectList(

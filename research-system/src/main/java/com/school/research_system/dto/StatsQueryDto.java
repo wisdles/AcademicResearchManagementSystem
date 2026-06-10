@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class StatsQueryDto {
-    private Long collegeId; // 学院ID筛选
-    private String teacherName; // 教师姓名/工号模糊搜索
+    private Long collegeId;
+    private String teacherName;
+    private Integer year; // 年份筛选，null 表示全部
 }

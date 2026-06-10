@@ -5,7 +5,11 @@
         <div class="card-header">
           <span>教师绩效考核排名</span>
           <div class="header-actions">
-            <el-select v-model="collegeId" placeholder="选择学院" clearable style="width: 200px; margin-right: 10px" @change="fetchData">
+            <el-select v-model="year" placeholder="年份" style="width: 100px; margin-right: 10px" @change="fetchData">
+              <el-option :label="'全部'" :value="null" />
+              <el-option v-for="y in yearList" :key="y" :label="String(y)" :value="y" />
+            </el-select>
+            <el-select v-model="collegeId" placeholder="选择学院" clearable style="width: 160px; margin-right: 10px" @change="fetchData">
               <el-option v-for="c in colleges" :key="c.id" :label="c.name" :value="c.id" />
             </el-select>
             <el-button type="primary" @click="fetchData">刷新数据</el-button>
@@ -30,7 +34,13 @@
             <el-tag type="primary">{{ scope.row.score }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="totalAchievements" label="成果总数" width="100" align="center" />
+        <el-table-column prop="totalAchievements" label="成果总数" width="110" align="center" />
+        <el-table-column prop="ownCount" label="主报" width="80" align="center">
+          <template #header><el-tooltip content="本人作为第一申报人的成果数">主报 ⓘ</el-tooltip></template>
+        </el-table-column>
+        <el-table-column prop="sharedCount" label="参与" width="80" align="center">
+          <template #header><el-tooltip content="作为共同作者参与的成果数(50%计分)">参与 ⓘ</el-tooltip></template>
+        </el-table-column>
         <el-table-column prop="projectCount" label="项目" width="70" align="center" />
         <el-table-column prop="paperCount" label="论文" width="70" align="center" />
         <el-table-column prop="patentCount" label="专利" width="70" align="center" />
@@ -50,16 +60,23 @@ import request from '@/utils/request'
 
 const performanceList = ref([])
 const colleges = ref([])
+const year = ref(new Date().getFullYear())
+const yearList = ref([])
 const collegeId = ref(null)
 const loading = ref(false)
+
+const fetchYears = async () => {
+  try {
+    const res = await request.get('/preference/rules/years')
+    if (res.code === 200) yearList.value = res.data || []
+  } catch (e) { console.error(e) }
+}
 
 const fetchColleges = async () => {
   try {
     const res = await request.get('/college/list')
     if (res.code === 200) colleges.value = res.data || []
-  } catch (e) {
-    console.error(e)
-  }
+  } catch (e) { console.error(e) }
 }
 
 const fetchData = async () => {
@@ -67,16 +84,14 @@ const fetchData = async () => {
   try {
     const params = {}
     if (collegeId.value) params.collegeId = collegeId.value
+    if (year.value) params.year = year.value
     const res = await request.post('/stats/performance', params)
     if (res.code === 200) performanceList.value = res.data || []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
+  } catch (e) { console.error(e) } finally { loading.value = false }
 }
 
 onMounted(() => {
+  fetchYears()
   fetchColleges()
   fetchData()
 })
