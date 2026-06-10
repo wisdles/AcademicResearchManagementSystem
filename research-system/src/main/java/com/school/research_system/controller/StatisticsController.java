@@ -272,6 +272,29 @@ public class StatisticsController {
         return Result.success(result);
     }
 
+    // 快速更新成果标签
+    @PutMapping("/update-tags")
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public Result<String> updateTags(@RequestBody Map<String, String> params) {
+        String type = params.get("type");
+        Long id = Long.valueOf(params.get("id"));
+        String tags = params.get("tags");
+        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper uw =
+            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>().set("tags", tags).eq("id", id);
+        int rows = switch (type) {
+            case "project" -> projectService.getBaseMapper().update(null, uw);
+            case "paper" -> paperService.getBaseMapper().update(null, uw);
+            case "patent" -> patentService.getBaseMapper().update(null, uw);
+            case "software" -> softService.getBaseMapper().update(null, uw);
+            case "book" -> bookService.getBaseMapper().update(null, uw);
+            case "award" -> awardService.getBaseMapper().update(null, uw);
+            case "competition" -> competitionService.getBaseMapper().update(null, uw);
+            case "course" -> courseService.getBaseMapper().update(null, uw);
+            default -> 0;
+        };
+        return rows > 0 ? Result.success("标签已更新") : Result.error("更新失败");
+    }
+
     // 导出我的成果为 CSV（与筛选条件一致）
     @PostMapping("/my-export")
     @SuppressWarnings("unchecked")
@@ -311,7 +334,9 @@ public class StatisticsController {
                 if (keyword != null && !keyword.isEmpty() && (name == null || !name.contains(keyword))) continue;
                 if (tag != null && !tag.isEmpty() && (tags == null || !tags.contains(tag))) continue;
 
+                Long id = (Long) obj.getClass().getMethod("getId").invoke(obj);
                 Map<String, Object> m = new HashMap<>();
+                m.put("id", id);
                 m.put("type", type);
                 m.put("typeLabel", typeLabel);
                 m.put("name", name);

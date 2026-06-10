@@ -62,7 +62,17 @@
         <el-table-column prop="typeLabel" label="类型" width="80" />
         <el-table-column prop="name" label="名称" min-width="240" show-overflow-tooltip />
         <el-table-column prop="classification" label="分类" width="80" />
-        <el-table-column prop="tags" label="标签" width="120" show-overflow-tooltip />
+        <el-table-column label="标签" width="180">
+          <template #default="{ row }">
+            <div v-if="row.editingTag" style="display:flex;gap:4px">
+              <el-input v-model="row.editTagValue" size="small" style="width:100px" @keyup.enter="saveTag(row)" @blur="saveTag(row)" ref="tagInput" />
+            </div>
+            <div v-else @click="startEditTag(row)" style="cursor:pointer;min-height:22px;display:flex;align-items:center" :title="row.tags || '点击编辑标签'">
+              <el-tag v-if="row.tags" size="small" type="success" style="cursor:pointer">{{ row.tags }}</el-tag>
+              <span v-else style="color:#c0c4cc;font-size:12px">点击添加</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status)" size="small">{{ row.statusText }}</el-tag>
@@ -156,6 +166,28 @@ const fetchList = async () => {
     const res = await request.post('/stats/my-achievements', params)
     if (res.code === 200) achievementList.value = res.data || []
   } finally { listLoading.value = false }
+}
+
+const startEditTag = (row) => {
+  achievementList.value.forEach(r => { r.editingTag = false })
+  row.editingTag = true
+  row.editTagValue = row.tags || ''
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.el-input__inner')
+    const last = inputs[inputs.length - 1]
+    if (last) last.focus()
+  }, 50)
+}
+
+const saveTag = async (row) => {
+  row.editingTag = false
+  const newVal = (row.editTagValue || '').trim()
+  if (newVal === (row.tags || '')) return
+  try {
+    await request.put('/stats/update-tags', { type: row.type, id: row.id, tags: newVal })
+    row.tags = newVal
+    ElMessage.success('标签已更新')
+  } catch (e) { row.tags = row.tags || '' }
 }
 
 const exportCSV = () => {
