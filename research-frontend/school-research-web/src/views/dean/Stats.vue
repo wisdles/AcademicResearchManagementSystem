@@ -69,7 +69,7 @@
       <!-- 左侧：饼图 -->
       <el-col :span="8">
         <el-card shadow="hover" class="chart-card">
-          <template #header><div class="card-title">成果类型分布</div></template>
+          <template #header><div class="card-title">成果类型分布 <small style="color:#909399;font-weight:400">(点击筛选)</small></div></template>
           <div ref="pieChartRef" class="chart-box"></div>
         </el-card>
       </el-col>
@@ -77,7 +77,7 @@
       <!-- 中间：柱状图 -->
       <el-col :span="16">
         <el-card shadow="hover" class="chart-card">
-          <template #header><div class="card-title">教师科研贡献 Top 10</div></template>
+          <template #header><div class="card-title">教师科研贡献 Top 10 <small style="color:#909399;font-weight:400">(点击教师)</small></div></template>
           <div ref="barChartRef" class="chart-box"></div>
         </el-card>
       </el-col>
@@ -91,6 +91,20 @@
          </el-card>
        </el-col>
     </el-row>
+
+    <!-- 详情表 -->
+    <el-card shadow="hover" class="mt-20" v-if="detailList.length > 0">
+      <template #header>
+        <span>{{ detailTitle }}</span>
+        <el-button size="small" style="float:right" @click="detailList=[]">关闭</el-button>
+      </template>
+      <el-table :data="detailList" border stripe max-height="400">
+        <el-table-column type="index" label="#" width="50" />
+        <el-table-column prop="type" label="类型" width="80" />
+        <el-table-column prop="name" label="名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="applicantName" label="申报人" width="100" />
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -116,6 +130,18 @@ let pieChart = null
 let barChart = null
 let lineChart = null
 
+const detailList = ref([])
+const detailTitle = ref('')
+const typeMap = { '项目': 'project', '论文': 'paper', '专利': 'patent', '软著': 'software', '专著': 'book', '获奖': 'award', '竞赛': 'competition', '课程': 'course' }
+
+const fetchDetail = async (params) => {
+  try {
+    detailTitle.value = params.title || '成果明细'
+    const res = await request.post('/stats/detail-list', { types: params.types, collegeId: query.collegeId, teacherName: params.teacherName || '' })
+    if (res.code === 200) detailList.value = res.data || []
+  } catch (e) { console.error(e) }
+}
+
 // --- 方法 ---
 const fetchColleges = async () => {
   const res = await request.get('/college/list')
@@ -137,7 +163,13 @@ const updateCharts = (data) => {
 
   // 1. 饼图
   if (pieChartRef.value) {
-    if (!pieChart) pieChart = echarts.init(pieChartRef.value)
+    if (!pieChart) {
+      pieChart = echarts.init(pieChartRef.value)
+      pieChart.on('click', (params) => {
+        const t = typeMap[params.name]
+        if (t) fetchDetail({ types: [t], title: '「' + params.name + '」类成果明细' })
+      })
+    }
     const distMap = data.classificationDistribution || data.categoryDistribution || {}
     const pieData = Object.entries(distMap).map(([k, v]) => ({ value: v, name: k }))
 
@@ -160,7 +192,12 @@ const updateCharts = (data) => {
 
   // 2. 柱状图
   if (barChartRef.value) {
-    if (!barChart) barChart = echarts.init(barChartRef.value)
+    if (!barChart) {
+      barChart = echarts.init(barChartRef.value)
+      barChart.on('click', (params) => {
+        fetchDetail({ teacherName: params.name, types: [], title: '「' + params.name + '」的成果明细' })
+      })
+    }
     const teachers = data.topTeachers || []
     const xData = teachers.map(t => t.name)
     const yData = teachers.map(t => t.count)
