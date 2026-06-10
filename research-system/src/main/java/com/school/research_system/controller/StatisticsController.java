@@ -235,11 +235,12 @@ public class StatisticsController {
         if (me == null) return Result.error("用户异常");
         Long uid = me.getId();
 
-        String filterType = (String) params.get("type");          // 成果类型，null=全部
+        String filterType = (String) params.get("type");
+        String filterStatus = (String) params.get("status");       // 状态过滤，如 "1,2" 或 "3"
         Integer yearFrom = params.get("yearFrom") != null ? Integer.valueOf(params.get("yearFrom").toString()) : null;
         Integer yearTo = params.get("yearTo") != null ? Integer.valueOf(params.get("yearTo").toString()) : null;
-        String keyword = (String) params.get("keyword");          // 名称/标题关键词
-        String tag = (String) params.get("tag");                  // 标签关键词
+        String keyword = (String) params.get("keyword");
+        String tag = (String) params.get("tag");
 
         java.time.LocalDateTime from = yearFrom != null ? java.time.LocalDateTime.of(yearFrom, 1, 1, 0, 0) : null;
         java.time.LocalDateTime to = yearTo != null ? java.time.LocalDateTime.of(yearTo, 12, 31, 23, 59) : null;
@@ -247,22 +248,28 @@ public class StatisticsController {
         List<Map<String, Object>> result = new java.util.ArrayList<>();
 
         // 每个类型
+        java.util.Set<Integer> statusSet = null;
+        if (filterStatus != null && !filterStatus.isEmpty()) {
+            statusSet = new java.util.HashSet<>();
+            for (String s : filterStatus.split(",")) statusSet.add(Integer.parseInt(s.trim()));
+        }
+
         if (filterType == null || "project".equals(filterType))
-            collect(result, projectService, uid, "project", "项目", from, to, keyword, tag);
+            collect(result, projectService, uid, "project", "项目", from, to, keyword, tag, statusSet);
         if (filterType == null || "paper".equals(filterType))
-            collect(result, paperService, uid, "paper", "论文", from, to, keyword, tag);
+            collect(result, paperService, uid, "paper", "论文", from, to, keyword, tag, statusSet);
         if (filterType == null || "patent".equals(filterType))
-            collect(result, patentService, uid, "patent", "专利", from, to, keyword, tag);
+            collect(result, patentService, uid, "patent", "专利", from, to, keyword, tag, statusSet);
         if (filterType == null || "software".equals(filterType))
-            collect(result, softService, uid, "software", "软著", from, to, keyword, tag);
+            collect(result, softService, uid, "software", "软著", from, to, keyword, tag, statusSet);
         if (filterType == null || "book".equals(filterType))
-            collect(result, bookService, uid, "book", "专著", from, to, keyword, tag);
+            collect(result, bookService, uid, "book", "专著", from, to, keyword, tag, statusSet);
         if (filterType == null || "award".equals(filterType))
-            collect(result, awardService, uid, "award", "获奖", from, to, keyword, tag);
+            collect(result, awardService, uid, "award", "获奖", from, to, keyword, tag, statusSet);
         if (filterType == null || "competition".equals(filterType))
-            collect(result, competitionService, uid, "competition", "竞赛", from, to, keyword, tag);
+            collect(result, competitionService, uid, "competition", "竞赛", from, to, keyword, tag, statusSet);
         if (filterType == null || "course".equals(filterType))
-            collect(result, courseService, uid, "course", "课程", from, to, keyword, tag);
+            collect(result, courseService, uid, "course", "课程", from, to, keyword, tag, statusSet);
 
         result.sort((a, b) -> {
             String t1 = (String) a.getOrDefault("createTime", "");
@@ -306,7 +313,7 @@ public class StatisticsController {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void collect(List<Map<String, Object>> result, com.baomidou.mybatisplus.extension.service.IService s,
             Long uid, String type, String typeLabel, java.time.LocalDateTime from, java.time.LocalDateTime to,
-            String keyword, String tag) {
+            String keyword, String tag, java.util.Set<Integer> statusSet) {
         com.baomidou.mybatisplus.core.conditions.query.QueryWrapper q =
                 new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper();
         q.eq("user_id", uid);
@@ -330,6 +337,8 @@ public class StatisticsController {
                 String classification = null;
                 try { classification = (String) obj.getClass().getMethod("getClassification").invoke(obj); } catch (Exception ignored) {}
 
+                // 状态筛选
+                if (statusSet != null && !statusSet.contains(status)) continue;
                 // 关键词筛选
                 if (keyword != null && !keyword.isEmpty() && (name == null || !name.contains(keyword))) continue;
                 if (tag != null && !tag.isEmpty() && (tags == null || !tags.contains(tag))) continue;

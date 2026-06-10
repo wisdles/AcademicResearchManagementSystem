@@ -21,7 +21,9 @@
     <el-row :gutter="20">
       <el-col :span="12">
         <el-card shadow="never">
-          <template #header>成果类型分布</template>
+          <template #header>
+            <span>成果类型分布 <small style="color:#909399;font-weight:400">(点击扇形筛选)</small></span>
+          </template>
           <div ref="pieChartRef" style="height: 350px"></div>
         </el-card>
       </el-col>
@@ -114,6 +116,7 @@ const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]
 const filterType = ref('')
 const filterKeyword = ref('')
 const filterTag = ref('')
+const filterStatus = ref('')
 const filterYearFrom = ref(null)
 const filterYearTo = ref(null)
 
@@ -131,7 +134,14 @@ const fetchDashboard = async () => {
   statCards[2].value = data.pendingCount || 0
   statCards[3].value = data.rejectedCount || 0
 
-  if (!pieChart) pieChart = echarts.init(pieChartRef.value)
+  if (!pieChart) {
+    pieChart = echarts.init(pieChartRef.value)
+    pieChart.on('click', (params) => {
+      const typeMap = { '项目': 'project', '论文': 'paper', '专利': 'patent', '软著': 'software', '专著': 'book', '获奖': 'award', '竞赛': 'competition', '课程': 'course' }
+      filterType.value = typeMap[params.name] || ''
+      fetchList()
+    })
+  }
   pieChart.setOption({
     tooltip: { trigger: 'item' },
     legend: { bottom: 0 },
@@ -141,7 +151,14 @@ const fetchDashboard = async () => {
     }]
   })
 
-  if (!barChart) barChart = echarts.init(barChartRef.value)
+  if (!barChart) {
+    barChart = echarts.init(barChartRef.value)
+    barChart.on('click', (params) => {
+      const statusMap = { '草稿': '0', '审核中': '1,2', '已通过': '3', '已驳回': '-1,-2' }
+      filterStatus.value = statusMap[params.name] || ''
+      fetchList()
+    })
+  }
   const sd = data.statusBreakdown || {}
   barChart.setOption({
     tooltip: { trigger: 'axis' },
@@ -159,6 +176,7 @@ const fetchList = async () => {
   try {
     const params = {}
     if (filterType.value) params.type = filterType.value
+    if (filterStatus.value) params.status = filterStatus.value
     if (filterKeyword.value) params.keyword = filterKeyword.value
     if (filterTag.value) params.tag = filterTag.value
     if (filterYearFrom.value) params.yearFrom = filterYearFrom.value
