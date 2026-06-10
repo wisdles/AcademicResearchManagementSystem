@@ -45,6 +45,8 @@ public class StatisticsController {
     private IUserService userService;
     @Autowired
     private ICollegeService collegeService;
+    @Autowired
+    private com.school.research_system.mapper.AchievementShareMapper shareMapper;
 
     @PostMapping("/dashboard")
     public Result<DashboardVo> getDashboardData(@RequestBody StatsQueryDto query) {
@@ -238,6 +240,8 @@ public class StatisticsController {
 
         for (User teacher : users) {
             Long uid = teacher.getId();
+
+            // 自己的成果
             long projCount = projectService.count(new LambdaQueryWrapper<Project>().eq(Project::getUserId, uid).eq(Project::getStatus, 3));
             long paperCount = paperService.count(new LambdaQueryWrapper<Paper>().eq(Paper::getUserId, uid).eq(Paper::getStatus, 3));
             long patentCount = patentService.count(new LambdaQueryWrapper<Patent>().eq(Patent::getUserId, uid).eq(Patent::getStatus, 3));
@@ -247,9 +251,31 @@ public class StatisticsController {
             long competitionCount = competitionService.count(new LambdaQueryWrapper<Competition>().eq(Competition::getUserId, uid).eq(Competition::getStatus, 3));
             long courseCount = courseService.count(new LambdaQueryWrapper<Course>().eq(Course::getUserId, uid).eq(Course::getStatus, 3));
 
-            // 计算总分：项目5分，论文3分，专利3分，软著2分，专著3分，获奖3分，竞赛2分，课程2分
+            // 别人共享给我的成果（去重后的唯一成果数，50% 计入分数）
+            List<AchievementShare> myShares = shareMapper.selectList(
+                new LambdaQueryWrapper<AchievementShare>().eq(AchievementShare::getSharedUserId, uid));
+            java.util.Set<String> uniqueShared = new java.util.HashSet<>();
+            long sharedProj = 0, sharedPaper = 0, sharedPatent = 0, sharedSoft = 0, sharedBook = 0, sharedAward = 0, sharedComp = 0, sharedCourse = 0;
+            for (AchievementShare s : myShares) {
+                String key = s.getAchievementType() + "_" + s.getAchievementId();
+                if (uniqueShared.add(key)) {
+                    switch (s.getAchievementType()) {
+                        case "project": sharedProj++; break;
+                        case "paper": sharedPaper++; break;
+                        case "patent": sharedPatent++; break;
+                        case "software": sharedSoft++; break;
+                        case "book": sharedBook++; break;
+                        case "award": sharedAward++; break;
+                        case "competition": sharedComp++; break;
+                        case "course": sharedCourse++; break;
+                    }
+                }
+            }
+
+            // 总分：自己成果满分 + 共享成果半价
             long score = projCount * 5 + paperCount * 3 + patentCount * 3 + softCount * 2 + bookCount * 3 + awardCount * 3 + competitionCount * 2 + courseCount * 2;
-            long total = projCount + paperCount + patentCount + softCount + bookCount + awardCount + competitionCount + courseCount;
+            long sharedScore = (sharedProj * 5 + sharedPaper * 3 + sharedPatent * 3 + sharedSoft * 2 + sharedBook * 3 + sharedAward * 3 + sharedComp * 2 + sharedCourse * 2) / 2;
+            long total = projCount + paperCount + patentCount + softCount + bookCount + awardCount + competitionCount + courseCount + sharedProj + sharedPaper + sharedPatent + sharedSoft + sharedBook + sharedAward + sharedComp + sharedCourse;
 
             Map<String, Object> map = new HashMap<>();
             map.put("userId", uid);
@@ -258,7 +284,9 @@ public class StatisticsController {
             College college = collegeService.getById(teacher.getCollegeId());
             map.put("collegeName", college != null ? college.getName() : "未知");
             map.put("totalAchievements", (int) total);
-            map.put("score", (int) score);
+            map.put("score", (int) (score + sharedScore));
+            map.put("ownCount", (int) (projCount + paperCount + patentCount + softCount + bookCount + awardCount + competitionCount + courseCount));
+            map.put("sharedCount", (int) (sharedProj + sharedPaper + sharedPatent + sharedSoft + sharedBook + sharedAward + sharedComp + sharedCourse));
             map.put("projectCount", (int) projCount);
             map.put("paperCount", (int) paperCount);
             map.put("patentCount", (int) patentCount);

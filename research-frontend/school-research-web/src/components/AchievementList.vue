@@ -39,7 +39,8 @@
           <!-- 审核中或已通过 -->
           <template v-else>
              <el-button v-if="scope.row.status === 1" link type="warning" size="small" @click="handleWithdraw(scope.row)">撤回</el-button>
-             <el-button link type="info" size="small" disabled>查看详情</el-button>
+             <el-button v-if="scope.row.status === 3" link type="primary" size="small" @click="$emit('share', scope.row)">共同作者</el-button>
+             <el-button link type="info" size="small" disabled>详情</el-button>
           </template>
         </template>
       </el-table-column>
@@ -55,7 +56,7 @@ import request from '@/utils/request.js' // 确保路径正确
 // 如果没有引入图标库，可以删掉 icon="Refresh"
 
 const props = defineProps({ type: String })
-const emit = defineEmits(['edit'])
+const emit = defineEmits(['edit', 'share'])
 
 const list = ref([])
 const loading = ref(false)
