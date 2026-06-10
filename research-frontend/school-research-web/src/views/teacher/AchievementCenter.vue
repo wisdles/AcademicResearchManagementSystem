@@ -32,21 +32,9 @@ const handleEdit = (row) => {
 }
 
 // 处理手动点击 Tab
-const handleTabClick = (tab) => {
-  if (tab.paneName === 'form') {
-    // 如果是用户手动点“成果申报”，说明是想新增，不是修改
-    // 如果此时 activeTab 已经是 form 且有 editData (也就是正在修改中)，就不清空
-    // 但通常逻辑是：手动点标签页 = 新增，点击列表修改 = 修改
-    // 这里我们可以做一个简单的判断：如果是从列表点过来的，editData 会有值
-    // 如果直接点 Tab，我们清空 editData 变成新增模式
-    if (activeTab.value === 'form' && !editData.value) {
-       // 已经是新增模式，不做啥
-    } else {
-       // 这里策略：只要手动点 Tab，就视为新增，清空编辑数据
-       // (注意：这取决于你的 editData 什么时候被赋值，上面 handleEdit 会赋值并切 Tab，不会触发这个点击事件)
-       editData.value = null 
-    }
-  }
+const handleTabClick = (paneName) => {
+  // 点到”成果申报”说明想新增，清空编辑数据
+  if (paneName === 'form') editData.value = null
 }
 // --- 共同作者功能 ---
 const shareVisible = ref(false)
