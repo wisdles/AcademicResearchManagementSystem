@@ -14,9 +14,11 @@ const editData = ref(null)
 const listRef = ref(null)
 
 // 当切换成果类型时（例如从项目切到论文），重置为新增模式
-watch(type, () => {
-  activeTab.value = 'form'
-  editData.value = null
+watch(() => route.query.type, (newType) => {
+  if (newType) {
+    activeTab.value = 'form'
+    editData.value = null
+  }
 })
 
 const handleEdit = (row) => {
